@@ -151,7 +151,8 @@ class Stations(geomodels.Model):
 
     class Meta:
         verbose_name = 'Virtual station'
-        # managed = False
+        db_table = 'geospatial\".\"stations'
+        managed = False
         constraints = [
             models.UniqueConstraint(fields=["name"], name="stations_name_unique"),
         ]

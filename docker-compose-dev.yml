@@ -33,7 +33,8 @@ services:
       - TS_BASEPATH=/tiles/
       - TS_DBTIMEOUT=20
       - TS_DBPOOLMAXCONNS=8
-      - TS_MAXFEATURESPERTILE=500
+#      - TS_MAXFEATURESPERTILE=500
+#      - TS_DEFAULTRESOLUTION = 1024
       - TS_DEBUG=true
     ports:
       - 7800:7800
