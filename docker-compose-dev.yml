@@ -1,0 +1,71 @@
+version: "3.1"
+#
+# Dockerfile to use to run a dev environment. Provides a postgis database and a pg_tileserv MVT server
+#
+
+volumes:
+  postgresql-data:
+
+services:
+  database:
+    image: postgis/postgis:14-3.2
+    restart: always
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+      - ./config/postgresql/entrypoint-initdb.d/:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=sagui
+      - POSTGRES_PASSWORD=sagui
+
+  pg-tileserv:
+    image: pigeosolutions/pg_tileserv:latest-alpine-3.12
+    entrypoint: [ "/wait-for-db.sh" ]
+    depends_on:
+      - database
+    env_file:
+      - config/pg_tileserv/pg_tileserv.env
+    environment:
+      - TS_BASEPATH=/tiles/
+      - TS_DBTIMEOUT=20
+      - TS_DBPOOLMAXCONNS=8
+      - TS_MAXFEATURESPERTILE=500
+      - TS_DEBUG=true
+    ports:
+      - 7800:7800
+
+
+  pg-featureserv:
+    image: pramsey/pg_featureserv:latest
+#    entrypoint: [ "/wait-for-db.sh" ]
+    depends_on:
+      - database
+    env_file:
+      - config/pg_tileserv/pg_tileserv.env
+    environment:
+      - PGFS_SERVER_BASEPATH=/features/
+      - PGFS_DATABASE_DBTIMEOUT=20
+      - PGFS_DATABASE_DBPOOLMAXCONNS=8
+      - PGFS_DATABASE_DEBUG=true
+      - PGFS_PAGING_LIMITMAX=10000
+    ports:
+      - 9000:9000
+
+  varnish:
+    image: varnish:stable
+    volumes:
+      - "./config/varnish/default.vcl:/etc/varnish/default.vcl"
+    ports:
+      - "80:80"
+    tmpfs:
+      - /var/lib/varnish:exec
+    environment:
+      - VARNISH_SIZE=2G
+#    command: "-p default_keep=300"
+    depends_on:
+      - "pg-tileserv"
+      - "pg-featureserv"

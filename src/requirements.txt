@@ -1,0 +1,7 @@
+Django
+django-environ
+djangorestframework
+djangorestframework-gis
+drf-spectacular
+netCDF4
+psycopg2-binary
