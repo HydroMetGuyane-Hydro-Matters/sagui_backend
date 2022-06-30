@@ -40,6 +40,7 @@ class Command(BaseCommand):
     only_last_n_days = None
     commit_page_size = None
     tablename        = 'sagui_rainfall'
+    last_updated_without_errors = None
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--rootpath',
@@ -80,6 +81,7 @@ class Command(BaseCommand):
             return
 
         counter = 1
+        errors = 0
         concatenated_df = pd.DataFrame()
         for f in new_files:
             self.stdout.write("Reading {}".format(os.path.basename(f)))
@@ -87,9 +89,12 @@ class Command(BaseCommand):
             concatenated_df = pd.concat([df, concatenated_df])
             if (counter % self.commit_page_size == 0) or (
                     f == new_files[-1]):  # last part means is last time element
-                tuples = [tuple(x) for x in df.to_numpy()]
-                records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in df.to_numpy()]
-                RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+                try:
+                    records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in df.to_numpy()]
+                    RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+                except (Exception, psycopg2.DatabaseError) as error:
+                    print(error)
+                    errors += 1
 
             counter +=1
 
@@ -98,12 +103,13 @@ class Command(BaseCommand):
         regex = r'DATA_[0-9T]*_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
         update_dates = [self._datetime_from_filename(f, regex) for f in new_files]
         last_update_date = max(update_dates)
+        last_updated_without_errors = last_update_date if not errors else self.last_updated_without_errors
         tbl_state = ImportState.objects.update_or_create(tablename=self.tablename, defaults={
             "last_updated": last_update_date,
             "last_updated_jd": utils.datetime_to_julianday(last_update_date),
-            "update_errors": 0,
-            "last_updated_without_errors": last_update_date,
-            "last_updated_without_errors_jd": utils.datetime_to_julianday(last_update_date),
+            "update_errors": errors,
+            "last_updated_without_errors": last_updated_without_errors,
+            "last_updated_without_errors_jd": utils.datetime_to_julianday(last_updated_without_errors),
         })
 
         tac = perf_counter()
@@ -120,6 +126,7 @@ class Command(BaseCommand):
         tbl_state = ImportState.objects.filter(tablename__exact=self.tablename)
 
         last_updated_without_errors = datetime.fromisoformat('1970-01-01T00:00:00+00:00')
+        self.last_updated_without_errors=last_updated_without_errors
         if self.force_update:
             # Don't filter, return everything. Force update on every date
             self.stdout.write("Forcing update on all the time values")
