@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.gis.forms import OpenLayersWidget
 from django.contrib.gis import admin as geoadmin
+from django.conf import settings
+
 from . import models
 
 
@@ -12,7 +14,7 @@ class MyOSMWidget(OpenLayersWidget):
     default_lon = -53
     default_lat = 4
     default_zoom = 7
-    drainage_url = 'http://localhost:7800/tiles/geospatial.drainage/{z}/{x}/{y}.pbf'
+    drainage_url = settings.SAGUI_SETTINGS.get('DRAINAGE_VT_URL', '')
 
     def __init__(self, attrs=None):
         super().__init__()
