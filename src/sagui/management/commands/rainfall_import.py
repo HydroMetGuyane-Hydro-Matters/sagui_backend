@@ -75,10 +75,14 @@ class Command(BaseCommand):
         if self.only_last_n_days:
             new_files = new_files[-self.only_last_n_days:]
 
+        if not new_files:
+            self.stdout.write(self.style.SUCCESS("DB is up to date"))
+            return
+
         counter = 1
         concatenated_df = pd.DataFrame()
         for f in new_files:
-            self.stdout.write("Publishing {}".format(os.path.basename(f)))
+            self.stdout.write("Reading {}".format(os.path.basename(f)))
             df = self.netcdf_to_dataframe(f)
             concatenated_df = pd.concat([df, concatenated_df])
             if (counter % self.commit_page_size == 0) or (
@@ -88,6 +92,19 @@ class Command(BaseCommand):
                 RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
 
             counter +=1
+
+        # Update the state table
+        # Get the lastest update date from the filenames
+        regex = r'DATA_[0-9T]*_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
+        update_dates = [self._datetime_from_filename(f, regex) for f in new_files]
+        last_update_date = max(update_dates)
+        tbl_state = ImportState.objects.update_or_create(tablename=self.tablename, defaults={
+            "last_updated": last_update_date,
+            "last_updated_jd": utils.datetime_to_julianday(last_update_date),
+            "update_errors": 0,
+            "last_updated_without_errors": last_update_date,
+            "last_updated_without_errors_jd": utils.datetime_to_julianday(last_update_date),
+        })
 
         tac = perf_counter()
         self.stdout.write(self.style.SUCCESS('Total processing time: {}'.format(tac - tic)))
@@ -114,29 +131,30 @@ class Command(BaseCommand):
 
         # List files that are more recent than that
         last_updated_text = last_updated_without_errors.strftime("%Y%m%dT%H%M")
-        last_updated_text = '20220627T1043'
-        regex = '(.*)DATA_([0-9T]*)_'+last_updated_text+'([0-9]*)_([0-9]*)\\.nc'
+        # regex = '(.*)DATA_([0-9T]*)_'+last_updated_text+'([0-9]*)_([0-9]*)\\.nc'
         regex2 = '.*DATA_[0-9T]*_(\d{8}T\d{4})[0-9]*_[0-9]*\\.nc'
         all_filenames = glob.glob('/home/jean/dev/IRD/hyfaa-mgb-platform/hyfaa-scheduler/work_configurations/operational_guyane_gsmap/databases/forcing_onmesh_db/data_store/*.nc')
-        new_files = [s for s in all_filenames if re.search(regex2, s).group(1) > '20220627T1005']
-        return sorted(new_files)
+        new_files = sorted([s for s in all_filenames if re.search(regex2, s).group(1) > last_updated_text])
+        if not new_files:
+            return None
 
+        # Some days might have been downloaded several times with different datestamps (last part of the name)
+        # => we only need the most recent one
+        filtered_new_files = []
+        for i in range(len(new_files)-1):
+            if os.path.basename(new_files[i])[:18] != os.path.basename(new_files[i+1])[:18] :
+                filtered_new_files.append(new_files[i])
+        filtered_new_files.append(new_files[-1]) # last one is always the most recent, since it is a sorted list
+        return filtered_new_files
 
     def netcdf_to_dataframe(self, file):
-        tic = perf_counter()
         nc = Dataset(file, "r", format="netCDF4")
         nb_cells = nc.dimensions['n_meshes'].size
         rain_values = nc.variables['rain'][:].data
 
         # extract record date from filename
         regex = r'DATA_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
-        rec_date_re = re.search(regex, os.path.basename(file))
-        # make it a proper date
-        rec_date = datetime.fromisoformat("{}-{}-{}T{}:{}:00+00:00".format(rec_date_re.group(1),
-                                                                           rec_date_re.group(2),
-                                                                           rec_date_re.group(3),
-                                                                           rec_date_re.group(4),
-                                                                           rec_date_re.group(5)))
+        rec_date = self._datetime_from_filename(file, regex)
 
         columns_dict = {
             'cell_id': np.arange(start=1, stop=nb_cells + 1, dtype='i2'),
@@ -146,8 +164,13 @@ class Command(BaseCommand):
         df = pd.DataFrame.from_dict(columns_dict)
         return df
 
-        # records = [ RainFall(cell_id=i+1, date=rec_date, rain=rain_values[i]) for i in range(nb_cells)]
-        # RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
-        #
-        # tac = perf_counter()
-        # self.stdout.write(self.style.SUCCESS('Processed in {} seconds'.format(tac - tic)))
+    @staticmethod
+    def _datetime_from_filename(filename, regex):
+        d_re = re.search(regex, os.path.basename(filename))
+        # make it a proper date
+        d = datetime.fromisoformat("{}-{}-{}T{}:{}:00+00:00".format(d_re.group(1),
+                                                                       d_re.group(2),
+                                                                       d_re.group(3),
+                                                                       d_re.group(4),
+                                                                       d_re.group(5)))
+        return d
