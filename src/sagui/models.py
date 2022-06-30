@@ -132,6 +132,9 @@ class Drainage(geomodels.Model):
 
 # SAGUI-specific models
 class RainFall(models.Model):
+    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
+    objects = BulkUpdateOrCreateQuerySet.as_manager()
+
     cell_id = models.SmallIntegerField("Minibasin ID", null=False, unique_for_date="date",
                 help_text='Cell identifier. Called ''cell'' in HYFAA netcdf file, field ''MINI'' in geospatial file')
     date = models.DateField("Date", null=False,
