@@ -97,7 +97,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'OPTIONS': {
-            'options': '-c search_path=guyane,public,topology'
+            'options': '-c search_path=guyane,hyfaa,geospatial,public,topology'
         },
         'HOST'  : env('POSTGRES_HOST'),
         'PORT'  : env('POSTGRES_PORT'),
@@ -171,4 +171,65 @@ SPECTACULAR_SETTINGS = {
 SAGUI_SETTINGS = {
     'RECORD_DECIMALS': 2,
     'SAGUI_COORDINATES_ROUND_DECIMALS': 5,
+    'DRAINAGE_VT_URL': env('DRAINAGE_VT_URL', default=''),
+    'HYFAA_IMPORT_NETCDF_ROOT_PATH': env('HYFAA_IMPORT_NETCDF_ROOT_PATH', default=None),
+    'HYFAA_DATABASE_URI': env('HYFAA_DATABASE_URI', default=None),
+    'HYFAA_DATABASE_SCHEMA': env('HYFAA_DATABASE_SCHEMA', default='hyfaa'),
+    'HYFAA_IMPORT_COMMIT_PAGE_SIZE': env('HYFAA_IMPORT_COMMIT_PAGE_SIZE', default=1),
+    'HYFAA_IMPORT_STRUCTURE_CONFIG': {
+     # Configures where to find the netcdf data and what to retrieve (var names)
+     # Also configures the names mapping between the netcdf data and the database
+     # (simplifies the naming of the variables, that was very verbose)
+        'sources': [
+            {
+                'name': 'mgbstandard',
+                'file': 'mgbstandard_solution_databases/post_processing_portal.nc',
+                'nc_data_vars': [
+                    'water_elevation_catchment_mean',
+                    'streamflow_catchment_mean',
+                 ],
+                'tablename': 'data_mgbstandard'
+            },
+            # {
+            #     'name': 'forecast',
+            #     'file': 'mgbstandard_solution_databases/prevision_using_previous_years/post_processing_portal.nc',
+            #     'nc_data_vars': [
+            #         'water_elevation_catchment_mean',
+            #         'water_elevation_catchment_median',
+            #         'water_elevation_catchment_std',
+            #         'water_elevation_catchment_mad',
+            #         'streamflow_catchment_mean',
+            #         'streamflow_catchment_median',
+            #         'streamflow_catchment_std',
+            #         'streamflow_catchment_mad',
+            #      ],
+            #     'tablename': 'data_forecast'
+            # },
+            {
+                'name': 'assimilated',
+                'file': 'assimilated_solution_databases/post_processing_portal.nc',
+                'nc_data_vars': [
+                    'water_elevation_catchment_mean',
+                    'water_elevation_catchment_median',
+                    'water_elevation_catchment_std',
+                    'water_elevation_catchment_mad',
+                    'streamflow_catchment_mean',
+                    'streamflow_catchment_median',
+                    'streamflow_catchment_std',
+                    'streamflow_catchment_mad',
+                 ],
+                'tablename': 'data_assimilated'
+            },
+          ],
+          'short_names': {
+            'water_elevation_catchment_mean': 'elevation_mean',
+            'water_elevation_catchment_median': 'elevation_median',
+            'water_elevation_catchment_std': 'elevation_stddev',
+            'water_elevation_catchment_mad': 'elevation_mad',
+            'streamflow_catchment_mean': 'flow_mean',
+            'streamflow_catchment_median': 'flow_median',
+            'streamflow_catchment_std': 'flow_stddev',
+            'streamflow_catchment_mad': 'flow_mad',
+          }
+    }
 }

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.gis.db import models as geomodels
+from bulk_update_or_create import BulkUpdateOrCreateQuerySet
 
 # HYFAA Data models -> store them in hyfaa schema ?
 
@@ -17,12 +18,20 @@ class AbstractHyfaaData(models.Model):
         abstract = True
 
 
+    def __str__(self):
+        return 'cell {} | {} | {}'.format(self.cell_id, self.date, self.flow_mean)
+
+
 class DataMgbStandard(AbstractHyfaaData):
+    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
+    objects = BulkUpdateOrCreateQuerySet.as_manager()
+
     flow_expected = models.FloatField(null=True, help_text='Expected value. Calculated using a floating median, over the flow_median values taken on the day surrounding the current day (+ or - 10 days around), during the previous years')
     flow_anomaly = models.FloatField(null=True, help_text='Represents the anomaly compared to expected data. Formula is 100 * (anomaly - expected) / expected')
 
     class Meta:
-        db_table = 'hyfaa\".\"data_mgbstandard'
+        db_table = 'data_mgbstandard' # will be in hyfaa, but not managed => found through the SEARCH_PATH
+        managed = False
         verbose_name = 'MGB hydrological data, calculated using HYFAA scheduler, without assimilation'
         constraints = [
             models.UniqueConstraint(fields=["cell_id", "date"], name="data_mgbstandard_unique_cellid_day"),
@@ -34,6 +43,9 @@ class DataMgbStandard(AbstractHyfaaData):
 
 
 class DataForecast(AbstractHyfaaData):
+    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
+    objects = BulkUpdateOrCreateQuerySet.as_manager()
+
     elevation_median = models.FloatField(null=True, help_text='Water elevation in m. Median value')
     elevation_stddev = models.FloatField(null=True, help_text='Water elevation in m. Standard deviation')
     elevation_mad = models.FloatField(null=True, help_text='Water elevation in m. Median absolute deviation')
@@ -42,8 +54,8 @@ class DataForecast(AbstractHyfaaData):
     flow_mad = models.FloatField(null=True, help_text='Stream flow. Median absolute  deviation')
 
     class Meta:
-        db_table = 'hyfaa\".\"data_forecast'
-        # managed = False
+        db_table = 'data_forecast' # will be in hyfaa, but not managed => found through the SEARCH_PATH
+        managed = False
         verbose_name = 'Forecast MGB hydrological data, calculated using HYFAA scheduler, with assimilation'
         constraints = [
             models.UniqueConstraint(fields=["cell_id", "date"], name="data_forecast_unique_cellid_day"),
@@ -55,6 +67,9 @@ class DataForecast(AbstractHyfaaData):
 
 
 class DataAssimilated(AbstractHyfaaData):
+    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
+    objects = BulkUpdateOrCreateQuerySet.as_manager()
+
     # Same as Forecast
     elevation_median = models.FloatField(null=True, help_text='Water elevation in m. Median value')
     elevation_stddev = models.FloatField(null=True, help_text='Water elevation in m. Standard deviation')
@@ -68,8 +83,8 @@ class DataAssimilated(AbstractHyfaaData):
     flow_anomaly = models.FloatField(null=True, help_text='Represents the anomaly compared to expected data. Formula is 100 * (anomaly - expected) / expected')
 
     class Meta:
-        db_table = 'hyfaa\".\"data_assimilated'
-        # managed = False
+        db_table = 'data_assimilated' # will be in hyfaa, but not managed => found through the SEARCH_PATH
+        managed = False
         verbose_name = 'MGB hydrological data, calculated using HYFAA scheduler, with assimilation'
         constraints = [
             models.UniqueConstraint(fields=["cell_id", "date"], name="data_assimilated_unique_cellid_day"),
@@ -103,7 +118,7 @@ class Drainage(geomodels.Model):
     geom = geomodels.LineStringField()
 
     class Meta:
-        db_table = 'geospatial\".\"drainage'
+        db_table = 'drainage'  # will be in hyfaa, but not managed => found through the SEARCH_PATH
         managed = False
         verbose_name = 'Drainage data (mini-sections of river/drainage) by minibasin'
         indexes = [
@@ -151,7 +166,7 @@ class Stations(geomodels.Model):
 
     class Meta:
         verbose_name = 'Virtual station'
-        db_table = 'geospatial\".\"stations'
+        db_table = 'stations' # will be in hyfaa, but not managed => found through the SEARCH_PATH
         managed = False
         constraints = [
             models.UniqueConstraint(fields=["name"], name="stations_name_unique"),
@@ -160,3 +175,24 @@ class Stations(geomodels.Model):
 
     def __str__(self):
         return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+
+
+class ImportState(models.Model):
+    tablename = models.CharField(max_length=20, null=False, primary_key=True)
+    last_updated = models.DateTimeField("Last Updated", default='1950-01-01T00:00:00.000Z00',
+            help_text='Datetime of last update from the netcdf data file')
+    last_updated_jd = models.FloatField('Last updated in Julian days', default=0,
+            help_text='Datetime of last update from the netcdf data file. In CNES Julian days (0 is 01/01/1950)')
+    update_errors = models.SmallIntegerField("Update errors", default=0,
+            help_text='Nb of errors during update')
+    last_updated_without_errors = models.DateTimeField("Last Updated", default='1950-01-01T00:00:00.000Z00',
+            help_text='Datetime of last update from the netcdf data file')
+    last_updated_without_errors_jd = models.FloatField('Last updated in Julian days', default=0,
+            help_text='Datetime of last update from the netcdf data file. In CNES Julian days (0 is 01/01/1950)')
+
+    class Meta:
+        verbose_name = 'Information about the current state of the DB'
+        ordering = ['tablename']
+
+    def __str__(self):
+        return '{}: {} ({} JD), {} errors'.format(self.tablename, self.last_updated, self.last_updated_jd, self.update_errors)
