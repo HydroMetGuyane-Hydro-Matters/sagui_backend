@@ -74,9 +74,20 @@ class Command(BaseCommand):
         # truncate the extraction to the last n days (useful when you are in a hurry)
         if self.only_last_n_days:
             new_files = new_files[-self.only_last_n_days:]
+
+        counter = 1
+        concatenated_df = pd.DataFrame()
         for f in new_files:
             self.stdout.write("Publishing {}".format(os.path.basename(f)))
-            self.netcdf_to_DB(f)
+            df = self.netcdf_to_dataframe(f)
+            concatenated_df = pd.concat([df, concatenated_df])
+            if (counter % self.commit_page_size == 0) or (
+                    f == new_files[-1]):  # last part means is last time element
+                tuples = [tuple(x) for x in df.to_numpy()]
+                records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in df.to_numpy()]
+                RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+
+            counter +=1
 
         tac = perf_counter()
         self.stdout.write(self.style.SUCCESS('Total processing time: {}'.format(tac - tic)))
@@ -111,22 +122,32 @@ class Command(BaseCommand):
         return sorted(new_files)
 
 
-    def netcdf_to_DB(self, file):
+    def netcdf_to_dataframe(self, file):
         tic = perf_counter()
         nc = Dataset(file, "r", format="netCDF4")
         nb_cells = nc.dimensions['n_meshes'].size
         rain_values = nc.variables['rain'][:].data
+
         # extract record date from filename
         regex = r'DATA_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
         rec_date_re = re.search(regex, os.path.basename(file))
         # make it a proper date
         rec_date = datetime.fromisoformat("{}-{}-{}T{}:{}:00+00:00".format(rec_date_re.group(1),
-                                                                                     rec_date_re.group(2),
-                                                                                     rec_date_re.group(3),
-                                                                                     rec_date_re.group(4),
-                                                                                     rec_date_re.group(5)))
-        records = [ RainFall(cell_id=i+1, date=rec_date, rain=rain_values[i]) for i in range(nb_cells)]
-        RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+                                                                           rec_date_re.group(2),
+                                                                           rec_date_re.group(3),
+                                                                           rec_date_re.group(4),
+                                                                           rec_date_re.group(5)))
 
-        tac = perf_counter()
-        self.stdout.write(self.style.SUCCESS('Processed in {} seconds'.format(tac - tic)))
+        columns_dict = {
+            'cell_id': np.arange(start=1, stop=nb_cells + 1, dtype='i2'),
+            'date': np.full(nb_cells, rec_date),
+            'rain': nc.variables['rain'][:].data,
+        }
+        df = pd.DataFrame.from_dict(columns_dict)
+        return df
+
+        # records = [ RainFall(cell_id=i+1, date=rec_date, rain=rain_values[i]) for i in range(nb_cells)]
+        # RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+        #
+        # tac = perf_counter()
+        # self.stdout.write(self.style.SUCCESS('Processed in {} seconds'.format(tac - tic)))
