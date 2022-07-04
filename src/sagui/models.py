@@ -23,18 +23,15 @@ class AbstractHyfaaData(models.Model):
 
 
 class DataMgbStandard(AbstractHyfaaData):
-    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
-    objects = BulkUpdateOrCreateQuerySet.as_manager()
-
     flow_expected = models.FloatField(null=True, help_text='Expected value. Calculated using a floating median, over the flow_median values taken on the day surrounding the current day (+ or - 10 days around), during the previous years')
     flow_anomaly = models.FloatField(null=True, help_text='Represents the anomaly compared to expected data. Formula is 100 * (anomaly - expected) / expected')
 
     class Meta:
-        db_table = 'data_mgbstandard' # will be in hyfaa, but not managed => found through the SEARCH_PATH
-        managed = False
+        db_table = 'hyfaa_data_mgbstandard'
+        # managed = False
         verbose_name = 'MGB hydrological data, calculated using HYFAA scheduler, without assimilation'
         constraints = [
-            models.UniqueConstraint(fields=["cell_id", "date"], name="data_mgbstandard_unique_cellid_day"),
+            models.UniqueConstraint(fields=["cell_id", "date"], name="hyfaa_data_mgbstandard_unique_cellid_day"),
         ]
         indexes = [
             models.Index(fields=['-date']),
@@ -43,9 +40,6 @@ class DataMgbStandard(AbstractHyfaaData):
 
 
 class DataForecast(AbstractHyfaaData):
-    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
-    objects = BulkUpdateOrCreateQuerySet.as_manager()
-
     elevation_median = models.FloatField(null=True, help_text='Water elevation in m. Median value')
     elevation_stddev = models.FloatField(null=True, help_text='Water elevation in m. Standard deviation')
     elevation_mad = models.FloatField(null=True, help_text='Water elevation in m. Median absolute deviation')
@@ -54,11 +48,11 @@ class DataForecast(AbstractHyfaaData):
     flow_mad = models.FloatField(null=True, help_text='Stream flow. Median absolute  deviation')
 
     class Meta:
-        db_table = 'data_forecast' # will be in hyfaa, but not managed => found through the SEARCH_PATH
-        managed = False
+        db_table = 'hyfaa_data_forecast'
+        # managed = False
         verbose_name = 'Forecast MGB hydrological data, calculated using HYFAA scheduler, with assimilation'
         constraints = [
-            models.UniqueConstraint(fields=["cell_id", "date"], name="data_forecast_unique_cellid_day"),
+            models.UniqueConstraint(fields=["cell_id", "date"], name="hyfaa_data_forecast_unique_cellid_day"),
         ]
         indexes = [
             models.Index(fields=['-date']),
@@ -67,9 +61,6 @@ class DataForecast(AbstractHyfaaData):
 
 
 class DataAssimilated(AbstractHyfaaData):
-    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
-    objects = BulkUpdateOrCreateQuerySet.as_manager()
-
     # Same as Forecast
     elevation_median = models.FloatField(null=True, help_text='Water elevation in m. Median value')
     elevation_stddev = models.FloatField(null=True, help_text='Water elevation in m. Standard deviation')
@@ -83,11 +74,11 @@ class DataAssimilated(AbstractHyfaaData):
     flow_anomaly = models.FloatField(null=True, help_text='Represents the anomaly compared to expected data. Formula is 100 * (anomaly - expected) / expected')
 
     class Meta:
-        db_table = 'data_assimilated' # will be in hyfaa, but not managed => found through the SEARCH_PATH
-        managed = False
+        db_table = 'hyfaa_data_assimilated'
+        # managed = False
         verbose_name = 'MGB hydrological data, calculated using HYFAA scheduler, with assimilation'
         constraints = [
-            models.UniqueConstraint(fields=["cell_id", "date"], name="data_assimilated_unique_cellid_day"),
+            models.UniqueConstraint(fields=["cell_id", "date"], name="hyfaa_data_assimilated_unique_cellid_day"),
         ]
         indexes = [
             models.Index(fields=['-date']),
@@ -101,7 +92,7 @@ class DrainageInclusionMask(geomodels.Model):
     mask = geomodels.PolygonField()
 
     class Meta:
-        db_table = 'geospatial_inclusion_mask'
+        db_table = 'hyfaa_geo_inclusion_mask'
         # managed = False
         verbose_name = 'Inclusion Mask. Only data included in this mask polygons will be displayed. Overrides hyfaa exclusion mask'
         indexes = [
@@ -118,16 +109,40 @@ class Drainage(geomodels.Model):
     geom = geomodels.LineStringField()
 
     class Meta:
-        db_table = 'drainage'  # will be in hyfaa, but not managed => found through the SEARCH_PATH
-        managed = False
+        db_table = 'hyfaa_drainage'
+        # managed = False
         verbose_name = 'Drainage data (mini-sections of river/drainage) by minibasin'
         indexes = [
             models.Index(fields=['geom']),
+            models.Index(fields=['mini']),
         ]
         ordering = ['mini']
 
     def __str__(self):
         return 'Mini {}'.format(self.mini)
+
+
+class MinibasinsData(models.Model):
+    mini =  models.SmallIntegerField("Minibasin ID", null=False, primary_key=True,
+                help_text='Minibasin identifier. Called ''cell'' in HYFAA netcdf file, field ''mini'' in geospatial file')
+    ordem = models.SmallIntegerField('Ordem', help_text='Defines the importance of the minibasin. The higher the more important')
+    sub = models.SmallIntegerField('Sub', help_text='Id of parent sub-basin')
+    width = models.FloatField('Width')
+    depth = models.FloatField('Depth')
+
+    class Meta:
+        db_table = 'hyfaa_minibasins_data'
+        #managed = False
+        verbose_name = 'Data associated to minibasins (for join with drainage or catchment data). Non-geo table as it is now'
+        indexes = [
+            models.Index(fields=['mini']),
+            models.Index(fields=['ordem', 'mini']),
+            models.Index(fields=['sub']),
+        ]
+        ordering = ['mini']
+
+    def __str__(self):
+        return 'Mini {} | ordem {} | sub {}'.format(self.mini,self.ordem, self.sub)
 
 
 # SAGUI-specific models
@@ -169,10 +184,10 @@ class Stations(geomodels.Model):
 
     class Meta:
         verbose_name = 'Virtual station'
-        db_table = 'stations' # will be in hyfaa, but not managed => found through the SEARCH_PATH
-        managed = False
+        db_table = 'hyfaa_stations'
+        # managed = False
         constraints = [
-            models.UniqueConstraint(fields=["name"], name="stations_name_unique"),
+            models.UniqueConstraint(fields=["name"], name="hyfaa_stations_name_unique"),
         ]
         ordering = ['name']
 
@@ -181,7 +196,7 @@ class Stations(geomodels.Model):
 
 
 class ImportState(models.Model):
-    tablename = models.CharField(max_length=20, null=False, primary_key=True)
+    tablename = models.CharField(max_length=50, null=False, primary_key=True)
     last_updated = models.DateTimeField("Last Updated", default='1950-01-01T00:00:00.000Z00',
             help_text='Datetime of last update from the netcdf data file')
     last_updated_jd = models.FloatField('Last updated in Julian days', default=0,
@@ -199,3 +214,14 @@ class ImportState(models.Model):
 
     def __str__(self):
         return '{}: {} ({} JD), {} errors'.format(self.tablename, self.last_updated, self.last_updated_jd, self.update_errors)
+
+
+class SaguiConfig(models.Model):
+    max_ordem = models.SmallIntegerField('Max ordem', default=12,
+            help_text="Minibasins will be filtered on this value (keep only minibasins with ordem value >= to this one")
+
+    class Meta:
+        verbose_name = 'SAGUI configuration'
+
+    def __str__(self):
+        return 'Max ordem: {}'.format(self.max_ordem)

@@ -175,7 +175,7 @@ SAGUI_SETTINGS = {
     'RAINFALL_NETCDF_FILES_PATH': env('RAINFALL_NETCDF_FILES_PATH', default=None),
     'HYFAA_IMPORT_NETCDF_ROOT_PATH': env('HYFAA_IMPORT_NETCDF_ROOT_PATH', default=None),
     'HYFAA_DATABASE_URI': env('HYFAA_DATABASE_URI', default=None),
-    'HYFAA_DATABASE_SCHEMA': env('HYFAA_DATABASE_SCHEMA', default='hyfaa'),
+    'HYFAA_DATABASE_SCHEMA': env('HYFAA_DATABASE_SCHEMA', default='guyane'),
     'HYFAA_IMPORT_COMMIT_PAGE_SIZE': env('HYFAA_IMPORT_COMMIT_PAGE_SIZE', default=1),
     'HYFAA_IMPORT_STRUCTURE_CONFIG': {
      # Configures where to find the netcdf data and what to retrieve (var names)
@@ -189,23 +189,23 @@ SAGUI_SETTINGS = {
                     'water_elevation_catchment_mean',
                     'streamflow_catchment_mean',
                  ],
-                'tablename': 'data_mgbstandard'
+                'tablename': 'hyfaa_data_mgbstandard'
             },
-            # {
-            #     'name': 'forecast',
-            #     'file': 'mgbstandard_solution_databases/prevision_using_previous_years/post_processing_portal.nc',
-            #     'nc_data_vars': [
-            #         'water_elevation_catchment_mean',
-            #         'water_elevation_catchment_median',
-            #         'water_elevation_catchment_std',
-            #         'water_elevation_catchment_mad',
-            #         'streamflow_catchment_mean',
-            #         'streamflow_catchment_median',
-            #         'streamflow_catchment_std',
-            #         'streamflow_catchment_mad',
-            #      ],
-            #     'tablename': 'data_forecast'
-            # },
+            {
+                'name': 'forecast',
+                'file': 'mgbstandard_solution_databases/prevision_using_previous_years/post_processing_portal.nc',
+                'nc_data_vars': [
+                    'water_elevation_catchment_mean',
+                    'water_elevation_catchment_median',
+                    'water_elevation_catchment_std',
+                    'water_elevation_catchment_mad',
+                    'streamflow_catchment_mean',
+                    'streamflow_catchment_median',
+                    'streamflow_catchment_std',
+                    'streamflow_catchment_mad',
+                 ],
+                'tablename': 'hyfaa_data_forecast'
+            },
             {
                 'name': 'assimilated',
                 'file': 'assimilated_solution_databases/post_processing_portal.nc',
@@ -219,7 +219,7 @@ SAGUI_SETTINGS = {
                     'streamflow_catchment_std',
                     'streamflow_catchment_mad',
                  ],
-                'tablename': 'data_assimilated'
+                'tablename': 'hyfaa_data_assimilated'
             },
           ],
           'short_names': {
