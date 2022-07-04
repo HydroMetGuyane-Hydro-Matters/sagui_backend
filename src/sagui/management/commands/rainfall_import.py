@@ -91,6 +91,7 @@ class Command(BaseCommand):
                     f == new_files[-1]):  # last part means is last time element
                 try:
                     records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in df.to_numpy()]
+                    self.stdout.write("Writing to DB")
                     RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
                 except (Exception, psycopg2.DatabaseError) as error:
                     print(error)

@@ -31,6 +31,7 @@ class Command(BaseCommand):
     db_schema        = None
     force_update     = None
     only_last_n_days = None
+    max_ordem        = None
     commit_page_size = None
     config           = None
 
@@ -52,6 +53,10 @@ class Command(BaseCommand):
                             type=int,
                             default=None,
                             help='if set, only the only_last_n_days days will be published (useful for publishing only a sample of data. Default: None)')
+        parser.add_argument('--max_ordem',
+                            type=int,
+                            default=None,
+                            help='max ordem value for the cells to import: needs the ')
         parser.add_argument('--commit_page_size',
                             type=int,
                             default=settings.SAGUI_SETTINGS.get('HYFAA_IMPORT_COMMIT_PAGE_SIZE', 1),
@@ -65,6 +70,7 @@ class Command(BaseCommand):
         self.db_schema = kwargs.get('schema')
         self.force_update = kwargs.get('force_update')
         self.only_last_n_days = kwargs.get('only_last_n_days')
+        self.max_ordem = kwargs.get('max_ordem')
         self.commit_page_size = kwargs.get('commit_page_size')
         self.config = settings.SAGUI_SETTINGS.get('HYFAA_IMPORT_STRUCTURE_CONFIG')
 
@@ -118,8 +124,29 @@ class Command(BaseCommand):
             'cell_id': 'int16',
             'is_analysis': 'boolean'
         })
+
         # self.stdout.write(df)
         return df
+
+
+    def _filter_dataframe(self, dataframe):
+        """
+        Filters the dataframe based on a provided ordem value. This value is checked on the
+        minibasins_data table to get the list of 'mini' values that pass it (must be >= max_ordem)
+        max_ordem is either defined as a parameter to this command, or taken from the sagui_saguiconfig table
+        :param dataframe:
+        :return: same dataframe, filtered
+        """
+        if not self.max_ordem:
+            # Filter out data based on the Import max ordem value configured in DB
+            conf = models.SaguiConfig.objects.order_by('id').last()
+            if conf:
+                self.max_ordem = conf.max_ordem
+        if self.max_ordem:
+            mini_recs = models.MinibasinsData.objects.filter(ordem__gte=self.max_ordem).values_list('mini', flat=True)
+            mini_list = list(mini_recs)
+            dataframe.query('cell_id in @mini_list', inplace=True)
+        return dataframe
 
 
     def _publish_dataframe_to_db(self, df, ds):
