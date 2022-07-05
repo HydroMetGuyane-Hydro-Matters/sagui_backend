@@ -37,4 +37,11 @@ class StationsAdmin(geoadmin.GISModelAdmin):
     gis_widget = MyOSMWidget
 
 
-admin.site.register(models.SaguiConfig)
+@admin.register(models.SaguiConfig)
+class SaguiConfigAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        base_add_permission = super(SaguiConfigAdmin, self).has_add_permission(request)
+        if base_add_permission:
+            # if there's already an entry, do not allow adding
+            return not models.SaguiConfig.objects.exists()
+        return False
