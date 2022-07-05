@@ -196,7 +196,7 @@ class Stations(geomodels.Model):
 
 
 
-class StationsWithAlerts(geomodels.Model):
+class StationsWithFlowAlerts(geomodels.Model):
     id = models.IntegerField(null=False, primary_key=True)
     name = models.CharField(max_length=50, null=False)
     river = models.CharField(max_length=50, null=True, blank=True)
@@ -206,7 +206,7 @@ class StationsWithAlerts(geomodels.Model):
 
     class Meta:
         verbose_name = 'Stations with alert codes (View)'
-        db_table = 'stations_with_alert'
+        db_table = 'stations_with_flow_alerts'
         managed = False
         ordering = ['id']
 
@@ -246,10 +246,9 @@ class SaguiConfig(models.Model):
     stations_alert_use_dataset = models.CharField(
         max_length=15,
         choices=Datasets.choices,
-        default=Datasets.MGBSTANDARD,
+        default=Datasets.ASSIMILATED,
         help_text = "To determine the alert level for a given stations, its thresholds must be compared with the current values from one dataset. We can choose here which one to use",
     )
-
 
     class Meta:
         verbose_name = 'SAGUI configuration'

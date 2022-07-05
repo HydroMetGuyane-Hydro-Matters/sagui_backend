@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sagui', '0014_stations_with_alert_levels_function'),
+        ('sagui', '0014_stations_with_flow_alert_levels_function'),
     ]
 
     operations = [

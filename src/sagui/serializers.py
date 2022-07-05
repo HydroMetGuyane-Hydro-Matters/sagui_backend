@@ -1,17 +1,17 @@
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
-from .models import Stations, StationsWithAlerts
+from .models import Stations, StationsWithFlowAlerts
+#
+# class StationsWithFlowAlertsNonGeoSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = StationsWithFlowAlerts
+#         fields = ('id', 'name', 'river', 'minibasin', 'levels')
 
-class StationsNonGeoSerializer(serializers.ModelSerializer):
+
+class StationsWithFlowAlertsGeoSerializer(GeoFeatureModelSerializer):
     class Meta:
-        model = StationsWithAlerts
-        fields = ('id', 'name', 'river', 'minibasin', 'levels')
-
-
-class StationsGeoSerializer(GeoFeatureModelSerializer):
-    class Meta:
-        model = StationsWithAlerts
+        model = StationsWithFlowAlerts
         geo_field = "geom"
         fields = ('id', 'name', 'river', 'minibasin', 'levels')
 
