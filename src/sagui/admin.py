@@ -35,3 +35,6 @@ class DrainageInclusionMaskAdmin(geoadmin.GISModelAdmin):
 @admin.register(models.Stations)
 class StationsAdmin(geoadmin.GISModelAdmin):
     gis_widget = MyOSMWidget
+
+
+admin.site.register(models.SaguiConfig)

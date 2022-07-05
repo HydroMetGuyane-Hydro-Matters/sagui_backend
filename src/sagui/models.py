@@ -195,6 +195,25 @@ class Stations(geomodels.Model):
         return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
 
 
+
+class StationsWithAlerts(geomodels.Model):
+    id = models.IntegerField(null=False, primary_key=True)
+    name = models.CharField(max_length=50, null=False)
+    river = models.CharField(max_length=50, null=True, blank=True)
+    minibasin = models.IntegerField(null=False)
+    levels = models.JSONField()
+    geom = geomodels.PointField(null=True)
+
+    class Meta:
+        verbose_name = 'Stations with alert codes (View)'
+        db_table = 'stations_with_alert'
+        managed = False
+        ordering = ['id']
+
+    def __str__(self):
+        return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+
+
 class ImportState(models.Model):
     tablename = models.CharField(max_length=50, null=False, primary_key=True)
     last_updated = models.DateTimeField("Last Updated", default='1950-01-01T00:00:00.000Z00',
@@ -220,8 +239,20 @@ class SaguiConfig(models.Model):
     max_ordem = models.SmallIntegerField('Max ordem', default=12,
             help_text="Minibasins will be filtered on this value (keep only minibasins with ordem value >= to this one")
 
+    class Datasets(models.TextChoices):
+        MGBSTANDARD = 'mgbstandard'
+        ASSIMILATED = 'assimilated'
+
+    stations_alert_use_dataset = models.CharField(
+        max_length=15,
+        choices=Datasets.choices,
+        default=Datasets.MGBSTANDARD,
+        help_text = "To determine the alert level for a given stations, its thresholds must be compared with the current values from one dataset. We can choose here which one to use",
+    )
+
+
     class Meta:
         verbose_name = 'SAGUI configuration'
 
     def __str__(self):
-        return 'Max ordem: {}'.format(self.max_ordem)
+        return 'Max ordem: {} | Dataset used for stations alerts: {}'.format(self.max_ordem, self.stations_alert_use_dataset)

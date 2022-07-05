@@ -9,7 +9,7 @@ from django.contrib.gis.geos import Point
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 from sagui.serializers import StationsNonGeoSerializer, StationsGeoSerializer, StationRecordSerializer
-from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast
+from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithAlerts
 
 
 @api_view(['GET'])
@@ -30,13 +30,13 @@ class LargeResultsSetPagination(PageNumberPagination):
 class StationsList(generics.ListAPIView):
     serializer_class = StationsNonGeoSerializer
     pagination_class = LargeResultsSetPagination
-    queryset = Stations.objects.all()
+    queryset = StationsWithAlerts.objects.all()
 
 
 class StationsAsGeojson(generics.ListAPIView):
     serializer_class = StationsGeoSerializer
     pagination_class = LargeResultsSetPagination
-    queryset = Stations.objects.all()
+    queryset = StationsWithAlerts.objects.all()
 
 
 def get_station_mgbstandard_record(cell_id, ref_date, duration=365):
