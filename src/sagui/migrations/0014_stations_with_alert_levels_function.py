@@ -13,8 +13,8 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
         """
 -- append alert status on the stations data
-DROP FUNCTION IF EXISTS guyane.stations_with_alert() CASCADE;
-CREATE OR REPLACE FUNCTION guyane.stations_with_alert()
+DROP FUNCTION IF EXISTS guyane.func_stations_with_flow_alerts() CASCADE;
+CREATE OR REPLACE FUNCTION guyane.func_stations_with_flow_alerts()
 RETURNS TABLE(id bigint,
 			  name varchar(50), 
 			 river varchar(50),
@@ -28,13 +28,13 @@ DECLARE
 	match_field TEXT;
 BEGIN
 	-- get the name of the dataset to use to match the thresholds. Can be default (mgbstandard) or defined in the saguiconfig table
-	SELECT 'guyane.hyfaa_data_' || COALESCE((SELECT stations_alert_use_dataset FROM guyane.sagui_saguiconfig LIMIT 1), 'mgbstandard') AS stations_alert_use_dataset
+	SELECT 'guyane.hyfaa_data_' || COALESCE((SELECT stations_alert_use_dataset FROM guyane.sagui_saguiconfig LIMIT 1), 'assimilated') AS stations_alert_use_dataset
 	INTO dataset_tbl_name;
 	--RAISE INFO 'dataset_tbl_name %', dataset_tbl_name;
 	
 	IF dataset_tbl_name = 'guyane.hyfaa_data_assimilated' 
 	THEN match_field:='flow_median';
-	ELSE match_field:='flow_mean';
+	ELSE match_field:='flow_mean'; --means we sue mgbstandard dataset
 	END IF;
     --RAISE INFO 'match_field %', match_field;
 	
@@ -56,11 +56,11 @@ BEGIN
 	RETURN QUERY EXECUTE format(query1, match_field, match_field, match_field, match_field, dataset_tbl_name);
 END
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION guyane.stations_with_alert() IS 
+COMMENT ON FUNCTION guyane.func_stations_with_flow_alerts() IS 
 'Append alert levels on stations data';
 
 --  Create a view using this function, it will be easier to call from Django
-CREATE OR REPLACE VIEW guyane.stations_with_alert AS
-SELECT * FROM guyane.stations_with_alert();        
+CREATE OR REPLACE VIEW guyane.stations_with_flow_alerts AS
+SELECT * FROM guyane.func_stations_with_flow_alerts();        
         """),
     ]
