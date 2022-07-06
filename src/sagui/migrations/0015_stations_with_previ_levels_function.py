@@ -33,8 +33,10 @@ BEGIN
 		
 	query1 := 'WITH stations AS (SELECT s.id, s.name, s.river, s.minibasin_id AS minibasin_id, s.geom, d."date", 
 				CASE
+				  WHEN d.flow_anomaly < -50 THEN ''d3''
 				  WHEN d.flow_anomaly < -25 THEN ''d2''
 				  WHEN d.flow_anomaly < -10 THEN ''d1''
+				  WHEN d.flow_anomaly > 50 THEN ''f3''
 				  WHEN d.flow_anomaly > 25 THEN ''f2''
 				  WHEN d.flow_anomaly > 10 THEN ''f1''
 				  ELSE ''n''
