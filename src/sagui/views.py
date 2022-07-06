@@ -172,20 +172,23 @@ class StationsPreviRecordsById(generics.GenericAPIView):
                     } for r in forecast_records ]
 
         # 4. Get pre-globalwarming reference data
-        # Fake it for now
-        # TODO: get real reference data when we've got it
+        # This is a tricky one, since we deal with day_of_year in the reference table
         # Get date interval
         start_date = ref_date - timedelta(days=nb_days_backward)
         end_date = forecast_records.last().date
-        reference_records = models.DataMgbStandard.objects.filter(cell_id__exact=cell_id,
-                                                     date__gt=start_date,
-                                                     date__lte=end_date,
-                                                     ).order_by('date')
+        dates_list = [start_date + timedelta(days=n) for n in range(int((end_date - start_date).days))]
+        doy_list = [d.strftime('%j') for d in dates_list]
+        reference_records = models.StationsReferenceFlow.objects.filter(station_id__exact=id,
+                                                     day_of_year__in=doy_list,
+                                                     ).order_by('day_of_year')
+        reference_records_as_dict = {
+            str(r.day_of_year): r.value for r in reference_records
+        }
         reference_data = [{
             "source": "reference",
-            "date": r.date.strftime("%Y-%m-%d"),
-            "flow": round(r.flow_mean),
-        } for r in reference_records]
+            "date": d.strftime("%Y-%m-%d"),
+            "flow": round(reference_records_as_dict[d.strftime('%j')]),
+        } for d in dates_list]
 
         # 5. Generate the output structure and send it
         station_record = {
