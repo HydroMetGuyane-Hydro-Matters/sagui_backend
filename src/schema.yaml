@@ -1,0 +1,405 @@
+openapi: 3.0.3
+info:
+  title: SAGUI API
+  version: 1.0.0
+  description: Sagui is an awesome project
+paths:
+  /api/v1/flow_alerts/stations:
+    get:
+      operationId: flow_alerts_stations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - flow_alerts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStationsWithFlowAlertsGeoList'
+          description: ''
+  /api/v1/flow_alerts/stations{format}:
+    get:
+      operationId: flow_alerts_stations_formatted_list
+      parameters:
+      - in: path
+        name: format
+        schema:
+          type: string
+          enum:
+          - .json
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - flow_alerts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStationsWithFlowAlertsGeoList'
+          description: ''
+  /api/v1/flow_alerts/stations/{id}/data:
+    get:
+      operationId: flow_alerts_stations_data_retrieve
+      description: Get Station records
+      parameters:
+      - in: query
+        name: duration
+        schema:
+          type: integer
+          default: 365
+        description: Duration time to extract, in days
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Station identifier, as can be found on /api/v1/stations/
+        required: true
+      tags:
+      - flow_alerts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationFlowRecord'
+          description: ''
+  /api/v1/flow_alerts/stations/{id}/data{format}:
+    get:
+      operationId: flow_alerts_stations_data_formatted_retrieve
+      description: Get Station records
+      parameters:
+      - in: query
+        name: duration
+        schema:
+          type: integer
+          default: 365
+        description: Duration time to extract, in days
+      - in: path
+        name: format
+        schema:
+          type: string
+          enum:
+          - .json
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Station identifier, as can be found on /api/v1/stations/
+        required: true
+      tags:
+      - flow_alerts
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationFlowRecord'
+          description: ''
+  /api/v1/flow_previ/stations:
+    get:
+      operationId: flow_previ_stations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - flow_previ
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStationsWithFlowPreviGeoList'
+          description: ''
+  /api/v1/flow_previ/stations{format}:
+    get:
+      operationId: flow_previ_stations_formatted_list
+      parameters:
+      - in: path
+        name: format
+        schema:
+          type: string
+          enum:
+          - .json
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - flow_previ
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStationsWithFlowPreviGeoList'
+          description: ''
+  /api/v1/flow_previ/stations/{id}/data:
+    get:
+      operationId: flow_previ_stations_data_retrieve
+      description: Retrieve some latest assimilated records and append forecast data
+        after them
+      parameters:
+      - in: query
+        name: duration
+        schema:
+          type: integer
+          default: 10
+        description: Duration time to extract, in days
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Station identifier, as can be found on /api/v1/stations/
+        required: true
+      tags:
+      - flow_previ
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationFlowRecord'
+          description: ''
+  /api/v1/flow_previ/stations/{id}/data{format}:
+    get:
+      operationId: flow_previ_stations_data_formatted_retrieve
+      description: Retrieve some latest assimilated records and append forecast data
+        after them
+      parameters:
+      - in: query
+        name: duration
+        schema:
+          type: integer
+          default: 10
+        description: Duration time to extract, in days
+      - in: path
+        name: format
+        schema:
+          type: string
+          enum:
+          - .json
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Station identifier, as can be found on /api/v1/stations/
+        required: true
+      tags:
+      - flow_previ
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationFlowRecord'
+          description: ''
+components:
+  schemas:
+    PaginatedStationsWithFlowAlertsGeoList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationsWithFlowAlertsGeo'
+    PaginatedStationsWithFlowPreviGeoList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StationsWithFlowPreviGeo'
+    StationFlowRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        minibasin:
+          type: integer
+        city:
+          type: string
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - city
+      - data
+      - id
+      - minibasin
+    StationsWithFlowAlertsGeo:
+      type: object
+      description: |-
+        A subclass of ModelSerializer
+        that outputs geojson-ready data as
+        features and feature collections
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        name:
+          type: string
+          maxLength: 50
+        river:
+          type: string
+          nullable: true
+          maxLength: 50
+        minibasin:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        levels:
+          type: object
+          additionalProperties: {}
+        geom:
+          type: string
+          nullable: true
+      required:
+      - id
+      - levels
+      - minibasin
+      - name
+    StationsWithFlowPreviGeo:
+      type: object
+      description: |-
+        A subclass of ModelSerializer
+        that outputs geojson-ready data as
+        features and feature collections
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        name:
+          type: string
+          maxLength: 50
+        river:
+          type: string
+          nullable: true
+          maxLength: 50
+        minibasin:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        levels:
+          type: object
+          additionalProperties: {}
+        geom:
+          type: string
+      required:
+      - geom
+      - id
+      - levels
+      - minibasin
+      - name
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

@@ -214,6 +214,24 @@ class StationsWithFlowAlerts(geomodels.Model):
         return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
 
 
+class StationsWithFlowPrevi(geomodels.Model):
+    id = models.IntegerField(null=False, primary_key=True)
+    name = models.CharField(max_length=50, null=False)
+    river = models.CharField(max_length=50, null=True, blank=True)
+    minibasin = models.IntegerField(null=False)
+    levels = models.JSONField()
+    geom = geomodels.PointField(null=True)
+
+    class Meta:
+        verbose_name = 'Stations with previ codes (View)'
+        db_table = 'stations_with_flow_previ'
+        managed = False
+        ordering = ['id']
+
+    def __str__(self):
+        return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+
+
 class ImportState(models.Model):
     tablename = models.CharField(max_length=50, null=False, primary_key=True)
     last_updated = models.DateTimeField("Last Updated", default='1950-01-01T00:00:00.000Z00',
@@ -243,7 +261,7 @@ class SaguiConfig(models.Model):
         MGBSTANDARD = 'mgbstandard'
         ASSIMILATED = 'assimilated'
 
-    stations_alert_use_dataset = models.CharField(
+    use_dataset = models.CharField(
         max_length=15,
         choices=Datasets.choices,
         default=Datasets.ASSIMILATED,
@@ -254,4 +272,4 @@ class SaguiConfig(models.Model):
         verbose_name = 'SAGUI configuration'
 
     def __str__(self):
-        return 'Max ordem: {} | Dataset used for stations alerts: {}'.format(self.max_ordem, self.stations_alert_use_dataset)
+        return 'Max ordem: {} | Dataset used: {}'.format(self.max_ordem, self.use_dataset)

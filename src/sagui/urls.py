@@ -7,9 +7,12 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 
 urlpatterns = [
     # path('api/v1/sagui', views.api_root),
-    path('api/v1/flow_alerts/stations', views.StationsList.as_view(), name="flow-alerts-get-stations-list"),
-    # path('api/v1/flow_alerts/stations/as_geojson', views.StationsAsGeojson.as_view(), name="flow-alerts-get-stations-list-geojson"),
-    re_path(r'^api/v1/stations/(?P<id>[0-9]*)/data/(?P<dataserie>all|mgbstandard|assimilated|forecast)$', views.StationRecordsById.as_view(), name="get-stationrecords-by-id"),
+    path('api/v1/flow_previ/stations', views.StationsPreviList.as_view(), name="flow-previ-get-stations-list"),
+    path('api/v1/flow_previ/stations/<int:id>/data', views.StationsPreviRecordsById.as_view(), name="flow-previ-get-stationrecords-by-id"),
+
+    path('api/v1/flow_alerts/stations', views.StationsAlertList.as_view(), name="flow-alerts-get-stations-list"),
+    path('api/v1/flow_alerts/stations/<int:id>/data', views.StationFlowRecordsById.as_view(), name="flow-alert-get-stationrecords-by-id"),
+
     path('api/schema/', SpectacularAPIView.as_view(), name='openapi-schema'),
     # Optional UI:
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='openapi-schema'), name='swagger-ui'),
