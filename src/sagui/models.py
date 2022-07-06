@@ -168,6 +168,26 @@ class RainFall(models.Model):
         ordering = ['-date']
 
 
+class StationsReferenceFlow(models.Model):
+    id = models.AutoField(primary_key=True)
+    day_of_year = models.SmallIntegerField()
+    station_id = models.SmallIntegerField()
+    value = models.SmallIntegerField()
+
+    class Meta:
+        verbose_name = 'Stations reference flow values: values from pre-global warming era'
+        db_table = 'stations_reference_flow'
+        unique_together = (('day_of_year', 'station_id'),)
+        indexes = [
+            models.Index(fields=['-day_of_year']),
+            models.Index(fields=['station_id', 'day_of_year']),
+        ]
+        ordering = ['day_of_year']
+
+    def __str__(self):
+        return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+
+
 class Stations(geomodels.Model):
     name = models.CharField(max_length=50, null=False)
     river = models.CharField(max_length=50, null=True, blank=True)
@@ -193,7 +213,6 @@ class Stations(geomodels.Model):
 
     def __str__(self):
         return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
-
 
 
 class StationsWithFlowAlerts(geomodels.Model):
