@@ -51,8 +51,8 @@ COMMENT ON  VIEW guyane.drainage_mgb_masked IS 'Drainage minibasins on Guyane Wa
 -----------------------------------------------------
 
 -- on assimilated data
-DROP MATERIALIZED VIEW IF EXISTS guyane.hyfaa_data_with_assim_aggregate_geo CASCADE;
-CREATE MATERIALIZED VIEW guyane.hyfaa_data_with_assim_aggregate_geo
+DROP MATERIALIZED VIEW IF EXISTS guyane.hyfaa_data_with_assimilated_aggregate_geo CASCADE;
+CREATE MATERIALIZED VIEW guyane.hyfaa_data_with_assimilated_aggregate_geo
 AS
  SELECT data.*,
         geo.ordem,
@@ -64,12 +64,12 @@ AS
   WHERE geo.mini = data.cell_id
   ORDER BY cell_id
 WITH DATA;
-CREATE UNIQUE INDEX ON guyane.hyfaa_data_with_assim_aggregate_geo (cell_id);
+CREATE UNIQUE INDEX ON guyane.hyfaa_data_with_assimilated_aggregate_geo (cell_id);
 
-ALTER TABLE guyane.hyfaa_data_with_assim_aggregate_geo
+ALTER TABLE guyane.hyfaa_data_with_assimilated_aggregate_geo
     OWNER TO postgres;
 
-COMMENT ON MATERIALIZED VIEW guyane.hyfaa_data_with_assim_aggregate_geo
+COMMENT ON MATERIALIZED VIEW guyane.hyfaa_data_with_assimilated_aggregate_geo
     IS 'Combine the geometries for the minibasins with the most recent values (n last days, stored in a json object)';
 
 

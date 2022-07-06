@@ -27,7 +27,7 @@ DECLARE
 	query1 TEXT;
 	match_field TEXT;
 BEGIN
-	-- get the name of the dataset to use to match the thresholds. Can be default (mgbstandard) or defined in the saguiconfig table
+	-- get the name of the dataset to use to match the thresholds. Can be default (assimilated) or defined in the saguiconfig table
 	SELECT 'guyane.hyfaa_data_' || COALESCE((SELECT use_dataset FROM guyane.sagui_saguiconfig LIMIT 1), 'assimilated') AS use_dataset
 	INTO dataset_tbl_name;
 	--RAISE INFO 'dataset_tbl_name %', dataset_tbl_name;
