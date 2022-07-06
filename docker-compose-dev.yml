@@ -23,7 +23,7 @@ services:
       - POSTGRES_PASSWORD=sagui
 
   pg-tileserv:
-    image: pigeosolutions/pg_tileserv:latest-alpine-3.12
+    image: pigeosolutions/pg_tileserv:latest
     entrypoint: [ "/wait-for-db.sh" ]
     depends_on:
       - database
