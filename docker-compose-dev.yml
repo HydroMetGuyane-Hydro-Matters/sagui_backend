@@ -21,24 +21,24 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=sagui
       - POSTGRES_PASSWORD=sagui
-#
-#  pg-tileserv:
-#    image: pigeosolutions/pg_tileserv:latest-alpine-3.12
-#    entrypoint: [ "/wait-for-db.sh" ]
-#    depends_on:
-#      - database
-#    env_file:
-#      - config/pg_tileserv/pg_tileserv.env
-#    environment:
-#      - TS_BASEPATH=/tiles/
-#      - TS_DBTIMEOUT=20
-#      - TS_DBPOOLMAXCONNS=8
-##      - TS_MAXFEATURESPERTILE=500
-##      - TS_DEFAULTRESOLUTION = 1024
-#      - TS_DEBUG=true
-#    ports:
-#      - 7800:7800
-#
+
+  pg-tileserv:
+    image: pigeosolutions/pg_tileserv:latest-alpine-3.12
+    entrypoint: [ "/wait-for-db.sh" ]
+    depends_on:
+      - database
+    env_file:
+      - config/pg_tileserv/pg_tileserv.env
+    environment:
+      - TS_BASEPATH=/tiles/
+      - TS_DBTIMEOUT=20
+      - TS_DBPOOLMAXCONNS=8
+#      - TS_MAXFEATURESPERTILE=500
+#      - TS_DEFAULTRESOLUTION = 1024
+      - TS_DEBUG=true
+    ports:
+      - 7800:7800
+
 #
 #  pg-featureserv:
 #    image: pramsey/pg_featureserv:latest
@@ -55,18 +55,18 @@ services:
 #      - PGFS_PAGING_LIMITMAX=10000
 #    ports:
 #      - 9000:9000
-#
-#  varnish:
-#    image: varnish:stable
-#    volumes:
-#      - "./config/varnish/default.vcl:/etc/varnish/default.vcl"
-#    ports:
-#      - "80:80"
-#    tmpfs:
-#      - /var/lib/varnish:exec
-#    environment:
-#      - VARNISH_SIZE=2G
-##    command: "-p default_keep=300"
-#    depends_on:
-#      - "pg-tileserv"
+
+  varnish:
+    image: varnish:stable
+    volumes:
+      - "./config/varnish/default.vcl:/etc/varnish/default.vcl"
+    ports:
+      - "80:80"
+    tmpfs:
+      - /var/lib/varnish:exec
+    environment:
+      - VARNISH_SIZE=2G
+#    command: "-p default_keep=300"
+    depends_on:
+      - "pg-tileserv"
 #      - "pg-featureserv"

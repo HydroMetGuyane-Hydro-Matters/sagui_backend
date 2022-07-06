@@ -1,9 +1,9 @@
 vcl 4.1;
 
-backend featureserv {
-    .host = "pg-featureserv";
-    .port = "9000";
-}
+#backend featureserv {
+#    .host = "pg-featureserv";
+#    .port = "9000";
+#}
 
 backend tileserv {
     .host = "pg-tileserv";
@@ -34,10 +34,10 @@ sub vcl_backend_response {
 
 sub vcl_recv {
 # Disable any cookie when looking for pg_feature stuff
-   if (req.url ~ "^/features/") {
-    unset req.http.cookie;
-    set req.backend_hint = featureserv;
-   }
+#   if (req.url ~ "^/features/") {
+#    unset req.http.cookie;
+#    set req.backend_hint = featureserv;
+#   }
    if (req.url ~ "^/tiles/") {
     unset req.http.cookie;
     set req.backend_hint = tileserv;
