@@ -167,6 +167,9 @@ class RainFall(models.Model):
         ]
         ordering = ['-date']
 
+    def __str__(self):
+        return 'Cell_id {} | date {} | rain {}'.format(self.cell_id, self.date, self.rain)
+
 
 class StationsReferenceFlow(models.Model):
     id = models.AutoField(primary_key=True)

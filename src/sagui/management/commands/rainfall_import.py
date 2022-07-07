@@ -1,5 +1,7 @@
 from datetime import datetime
 import glob
+from io import StringIO
+
 from netCDF4 import Dataset
 import numpy as np
 import os
@@ -80,22 +82,39 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("DB is up to date"))
             return
 
+
+        if self.force_update:
+            self.stdout.write("Emptying the table before loading the new data (--force_update was enabled)")
+            RainFall.objects.raw('DELETE FROM sagui_rainfall;')
+
         counter = 1
         errors = 0
         concatenated_df = pd.DataFrame()
         for f in new_files:
             self.stdout.write("Reading {}".format(os.path.basename(f)))
             df = self.netcdf_to_dataframe(f)
-            concatenated_df = pd.concat([df, concatenated_df])
+            concatenated_df = pd.concat([df, concatenated_df], ignore_index=True)
             if (counter % self.commit_page_size == 0) or (
                     f == new_files[-1]):  # last part means is last time element
                 try:
-                    records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in df.to_numpy()]
-                    self.stdout.write("Writing to DB")
-                    RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
+                    # save dataframe to an in memory buffer, cf https://naysan.ca/2020/05/09/pandas-to-postgresql-using-psycopg2-bulk-insert-performance-benchmark/
+                    buffer = StringIO()
+                    concatenated_df.to_csv(buffer, header=False, index=False)
+                    buffer.seek(0)
+
+                    # Execute the query
+                    with connection.cursor() as cursor:
+                        cursor.copy_from(buffer, 'sagui_rainfall', sep=",", columns = ('cell_id','date', 'rain'))
+
+                    # records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in concatenated_df.to_numpy()]
+                    # self.stdout.write("Writing to DB")
+                    # RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
                 except (Exception, psycopg2.DatabaseError) as error:
                     print(error)
                     errors += 1
+                finally:
+                    # clear the list of records
+                    concatenated_df = pd.DataFrame()
 
             counter +=1
 
