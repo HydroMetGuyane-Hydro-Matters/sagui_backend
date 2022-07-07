@@ -35,7 +35,7 @@ END
 $$
 LANGUAGE 'plpgsql';
 
-COMMENT ON FUNCTION guyane.create_hyfaa_drainage_geo_view IS 'Dynamically created the main view used for VT display of the drainage data. Source data (assim or mgbstandard) and max ordem are taken from the saguiconfig table';
+COMMENT ON PROCEDURE guyane.create_hyfaa_drainage_geo_view() IS 'Dynamically created the main view used for VT display of the drainage data. Source data (assim or mgbstandard) and max ordem are taken from the saguiconfig table';
 
 -- execute the procedure and create the guyane.hyfaa_data_aggregated_geo
 CALL guyane.create_hyfaa_drainage_geo_view();        
