@@ -12,6 +12,28 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             """
+            
+-- Get alert level as string, depending on the anomaly level (percentage)
+--DROP FUNCTION guyane.anomaly_to_alert_level(double precision);
+CREATE OR REPLACE FUNCTION guyane.anomaly_to_alert_level(flow_anomaly double precision)
+  RETURNS text
+  LANGUAGE plpgsql AS
+$func$
+BEGIN
+	RETURN (SELECT
+			CASE
+			  WHEN flow_anomaly < -50 THEN 'd3'
+			  WHEN flow_anomaly < -25 THEN 'd2'
+			  WHEN flow_anomaly < -10 THEN 'd1'
+			  WHEN flow_anomaly > 50 THEN 'f3'
+			  WHEN flow_anomaly > 25 THEN 'f2'
+			  WHEN flow_anomaly > 10 THEN 'f1'
+			  ELSE 'n'
+			END AS level);
+END
+$func$;
+COMMENT ON FUNCTION guyane.anomaly_to_alert_level() IS 
+'Get alert level as string, depending on the anomaly level (percentage)';
 
 DROP FUNCTION IF EXISTS guyane.func_stations_with_flow_previ() CASCADE;
 CREATE OR REPLACE FUNCTION guyane.func_stations_with_flow_previ()
@@ -32,15 +54,7 @@ BEGIN
 	RAISE INFO 'dataset_tbl_name %', dataset_tbl_name;
 		
 	query1 := 'WITH stations AS (SELECT s.id, s.name, s.river, s.minibasin_id AS minibasin_id, s.geom, d."date", 
-				CASE
-				  WHEN d.flow_anomaly < -50 THEN ''d3''
-				  WHEN d.flow_anomaly < -25 THEN ''d2''
-				  WHEN d.flow_anomaly < -10 THEN ''d1''
-				  WHEN d.flow_anomaly > 50 THEN ''f3''
-				  WHEN d.flow_anomaly > 25 THEN ''f2''
-				  WHEN d.flow_anomaly > 10 THEN ''f1''
-				  ELSE ''n''
-				END AS level
+				guyane.anomaly_to_alert_level(flow_anomaly) AS level
 				FROM guyane.hyfaa_stations s INNER JOIN %s d
 				ON s.minibasin_id = d.cell_id
 				WHERE d."date" > (SELECT MAX("date") FROM %s) - ''15 days''::interval
