@@ -40,20 +40,21 @@ BEGIN
 	
 	query1 := 'WITH stations AS (SELECT s.id, s.name, s.river, s.minibasin_id, s.geom, d."date", 
 				CASE
-				  WHEN d.%s < s.threshold_drought THEN ''d2''
-				  WHEN d.%s > s.threshold_flood_high THEN ''f3''
-				  WHEN d.%s > s.threshold_flood_mid THEN ''f2''
-				  WHEN d.%s > s.threshold_flood_low THEN ''f1''
-				  ELSE ''n''
+				  WHEN d.%1$s < s.threshold_drought THEN ''d2''
+				  WHEN s.threshold_drought <= d.%1$s AND d.%1$s < s.threshold_flood_low THEN ''n''
+				  WHEN s.threshold_flood_low <= d.%1$s AND d.%1$s < s.threshold_flood_mid THEN ''f1''
+				  WHEN s.threshold_flood_mid <= d.%1$s AND d.%1$s < s.threshold_flood_high THEN ''f2''
+				  WHEN d.%1$s >= s.threshold_flood_high THEN ''f3''
+				  ELSE ''undefined''
 				END AS level
-				FROM guyane.hyfaa_stations s INNER JOIN %s d
+				FROM guyane.hyfaa_stations s INNER JOIN %2$s d
 				ON s.minibasin_id = d.cell_id
 				WHERE d."date" > (SELECT MAX("date") FROM guyane.hyfaa_data_mgbstandard) - ''15 days''::interval
 				ORDER BY s.name, d."date" DESC)
 			SELECT id, name, river, minibasin_id, jsonb_agg(jsonb_build_object(''date'',"date",''level'',level)) AS levels, geom
 			FROM stations
 			GROUP BY id, name, river, minibasin_id, geom';
-	RETURN QUERY EXECUTE format(query1, match_field, match_field, match_field, match_field, dataset_tbl_name);
+	RETURN QUERY EXECUTE format(query1, match_field, dataset_tbl_name);
 END
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION guyane.func_stations_with_flow_alerts() IS 
