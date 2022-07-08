@@ -14,7 +14,7 @@ import sys
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from django.db import connection
+from django.db import connection, transaction
 
 from sagui import utils
 from sagui.models import ImportState, RainFall
@@ -85,7 +85,9 @@ class Command(BaseCommand):
 
         if self.force_update:
             self.stdout.write("Emptying the table before loading the new data (--force_update was enabled)")
-            RainFall.objects.raw('DELETE FROM sagui_rainfall;')
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute('TRUNCATE TABLE guyane.sagui_rainfall;')
 
         counter = 1
         errors = 0
