@@ -179,7 +179,7 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         # Get date interval
         start_date = ref_date - timedelta(days=nb_days_backward)
         end_date = forecast_records.last().date
-        dates_list = [start_date + timedelta(days=n) for n in range(int((end_date - start_date).days))]
+        dates_list = [start_date + timedelta(days=n+1) for n in range(int((end_date - start_date).days))]
         doy_list = [d.strftime('%j') for d in dates_list]
         reference_records = models.StationsReferenceFlow.objects.filter(station_id__exact=id,
                                                      day_of_year__in=doy_list,
@@ -190,7 +190,7 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         reference_data = [{
             "source": "reference",
             "date": d.strftime("%Y-%m-%d"),
-            "flow": round(reference_records_as_dict[d.strftime('%j')]),
+            "flow": round(reference_records_as_dict[d.strftime('%j').lstrip("0")]),
         } for d in dates_list]
 
         # 5. Generate the output structure and send it
@@ -448,6 +448,6 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.hyfaa_data_assimilated ORDER
             "alert_code": "undefined",
             "attributes": {}
         })
-        
+
         serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)
         return Response(serializer.data)
