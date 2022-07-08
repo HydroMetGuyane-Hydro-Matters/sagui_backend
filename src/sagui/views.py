@@ -1,6 +1,8 @@
 from datetime import date, timedelta, datetime
+import logging
 
 from django.core import serializers
+from django.db import connection
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -12,6 +14,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExampl
 from sagui import serializers, models
 from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts
 
+logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -372,4 +375,79 @@ class StationFlowRecordsById(generics.GenericAPIView):
         }
 
         serializer = serializers.StationFlowAlertRecordsSerializer(station_record, many=False)
+        return Response(serializer.data)
+
+
+class Dashboard(generics.GenericAPIView):
+    """
+    Get data for dashboard display
+    """
+    serializer_class=serializers.DashboardEntrySerializer
+
+    def get(self, request, format=None):
+        dash_entries = []
+        # 1. flow_previ entry
+        # Get anomaly stats and codes over the stations
+        anomaly = None
+        try:
+            with connection.cursor() as cursor:
+                query = '''
+SELECT  ROUND(AVG(flow_anomaly)), guyane.anomaly_to_alert_level(AVG(flow_anomaly)) AS code_avg, 
+        ROUND(MIN(flow_anomaly)), guyane.anomaly_to_alert_level(MIN(flow_anomaly)) AS code_min, 
+        ROUND(MAX(flow_anomaly)), guyane.anomaly_to_alert_level(MAX(flow_anomaly)) AS code_max
+FROM guyane.hyfaa_data_assimilated a, guyane.hyfaa_stations s 
+WHERE a.cell_id = s.minibasin_id 
+AND a."date" IN (SELECT DISTINCT "date" FROM guyane.hyfaa_data_assimilated ORDER BY "date" DESC LIMIT 1);
+                '''
+                cursor.execute(query)
+                rec = cursor.fetchone()
+        except Exception as error:
+            logger.error("Exception while fetching Dashboard data:", error)
+            logger.error("Exception TYPE:", type(error))
+
+        if rec:
+            # get the code for the anomaly with highest asbsolute value
+            global_alert_level = rec[3] if abs(rec[2]) > abs(rec[4]) else rec[5]
+            dash_entries.append({
+                "id": "flow_previ",
+                "alert_code": global_alert_level,
+                "attributes": {
+                    "anomaly_avg": rec[0],
+                    "anomaly_min": rec[2],
+                    "anomaly_max": rec[4],
+                }
+            })
+
+        # 2. flow_alerts entry
+        flow_alert_levels = ['d3', 'd2', 'd1', 'n', 'f1', 'f2', 'f3']
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT levels->0->>\'level\' AS l FROM guyane.stations_with_flow_alerts')
+            recs = cursor.fetchall()
+        rec_levels = [r[0] for r in recs]
+        global_alert_level ='undefined'
+        for lev in flow_alert_levels:
+            if lev in rec_levels:
+                global_alert_level = lev
+                break
+        dash_entries.append({
+            "id": "flow_alerts",
+            "alert_code": global_alert_level,
+            "attributes": {}
+        })
+
+        # 3. Rain alert entry
+        dash_entries.append({
+            "id": "rain_alerts",
+            "alert_code": "undefined",
+            "attributes": {}
+        })
+
+        # 4. Atmospheric alert entry
+        dash_entries.append({
+            "id": "atmo_alerts",
+            "alert_code": "undefined",
+            "attributes": {}
+        })
+        
+        serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)
         return Response(serializer.data)
