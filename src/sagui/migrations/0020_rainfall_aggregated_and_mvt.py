@@ -38,7 +38,7 @@ rainfall_by_sub AS (
 	GROUP BY sub, "date"
 ),
 agg AS (
-	SELECT id, json_agg(json_build_object('date', "date", 'rain', round(rain))) AS values
+	SELECT id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values
 	FROM rainfall_by_sub
 	GROUP BY id
 )
@@ -53,7 +53,7 @@ WITH latest_dates AS (
 	SELECT DISTINCT "date" FROM guyane.sagui_rainfall ORDER BY "date" DESC LIMIT 15
 ), 
 rainfall_agg_data AS (
-	SELECT cell_id AS id, json_agg(json_build_object('date', "date", 'rain', round(rain))) AS values FROM guyane.sagui_rainfall
+	SELECT cell_id AS id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values FROM guyane.sagui_rainfall
 	WHERE "date" in (SELECT * FROM latest_dates)
 	GROUP BY cell_id
 )
@@ -110,4 +110,39 @@ LANGUAGE 'plpgsql'
 STABLE
 PARALLEL SAFE;
         """),
+        migrations.RunSQL(
+            """
+-- Update trigger on importstate table
+--
+-- Post processing trigger
+CREATE OR REPLACE FUNCTION guyane.publication_post_processing()
+    RETURNS TRIGGER LANGUAGE plpgsql
+    SECURITY DEFINER
+    AS $$
+    BEGIN
+        -- mgbstandard data
+        IF NEW."tablename" LIKE '%data_mgbstandard' THEN
+            RAISE INFO 'Triggering post-processing on mgbstandard table. Please wait...';
+            PERFORM guyane.compute_expected_and_anomaly('guyane.hyfaa_data_mgbstandard', 'flow_mean', 10);
+            REFRESH  MATERIALIZED VIEW guyane.hyfaa_data_with_mgbstandard_aggregate_geo;
+        END IF;
+
+        -- assimilated data
+        IF NEW."tablename" LIKE '%data_assimilated' THEN
+            RAISE INFO 'Triggering post-processing on assimilated table. Please wait...';
+            PERFORM guyane.compute_expected_and_anomaly('guyane.hyfaa_data_assimilated', 'flow_median', 10);
+            REFRESH  MATERIALIZED VIEW guyane.hyfaa_data_with_assim_aggregate_geo;
+        END IF;
+
+        -- rainfall data
+        IF NEW."tablename" LIKE '%_rainfall' THEN
+            RAISE INFO 'Triggering post-processing on rainfall table. Please wait...';
+            REFRESH  MATERIALIZED VIEW guyane.rainfall_subbasin_aggregated_geo;
+            REFRESH  MATERIALIZED VIEW guyane.rainfall_minibasin_aggregated_geo;
+        END IF;
+
+        RETURN null;
+    END $$;
+
+            """),
     ]
