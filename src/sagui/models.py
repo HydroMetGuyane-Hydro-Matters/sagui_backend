@@ -116,6 +116,9 @@ class Drainage(geomodels.Model):
             models.Index(fields=['geom']),
             models.Index(fields=['mini']),
         ]
+        constraints = [
+            models.UniqueConstraint(fields=["mini"], name="drainage_unique_mini"),
+        ]
         ordering = ['mini']
 
     def __str__(self):
@@ -136,6 +139,9 @@ class Catchments(geomodels.Model):
         indexes = [
             models.Index(fields=['geom']),
             models.Index(fields=['mini']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["mini"], name="catchments_unique_mini"),
         ]
         ordering = ['mini']
 
@@ -159,6 +165,9 @@ class MinibasinsData(models.Model):
             models.Index(fields=['mini']),
             models.Index(fields=['ordem', 'mini']),
             models.Index(fields=['sub']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["mini"], name="minibasins_data_unique_mini"),
         ]
         ordering = ['mini']
 
