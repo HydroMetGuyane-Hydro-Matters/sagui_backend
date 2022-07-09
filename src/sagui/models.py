@@ -122,6 +122,27 @@ class Drainage(geomodels.Model):
         return 'Mini {}'.format(self.mini)
 
 
+class Catchments(geomodels.Model):
+    mini =  models.SmallIntegerField("Minibasin ID", null=False,
+                help_text='Minibasin identifier. Called ''cell'' in HYFAA netcdf file, field ''mini'' in geospatial file')
+    sub = models.SmallIntegerField("Subbasin ID", null=False,
+                help_text='Subbasin identifier. Subbasin are the level above minibasins')
+    geom = geomodels.LineStringField()
+
+    class Meta:
+        db_table = 'hyfaa_catchments'
+        # managed = False
+        verbose_name = 'Drainage data (mini-sections of river/drainage) by minibasin'
+        indexes = [
+            models.Index(fields=['geom']),
+            models.Index(fields=['mini']),
+        ]
+        ordering = ['mini']
+
+    def __str__(self):
+        return 'Mini {}'.format(self.mini)
+
+
 class MinibasinsData(models.Model):
     mini =  models.SmallIntegerField("Minibasin ID", null=False, primary_key=True,
                 help_text='Minibasin identifier. Called ''cell'' in HYFAA netcdf file, field ''mini'' in geospatial file')
