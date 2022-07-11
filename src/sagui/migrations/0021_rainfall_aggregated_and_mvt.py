@@ -131,7 +131,7 @@ CREATE OR REPLACE FUNCTION guyane.publication_post_processing()
         IF NEW."tablename" LIKE '%data_assimilated' THEN
             RAISE INFO 'Triggering post-processing on assimilated table. Please wait...';
             PERFORM guyane.compute_expected_and_anomaly('guyane.hyfaa_data_assimilated', 'flow_median', 10);
-            REFRESH  MATERIALIZED VIEW guyane.hyfaa_data_with_assim_aggregate_geo;
+            REFRESH  MATERIALIZED VIEW guyane.hyfaa_data_with_assimilated_aggregate_geo;
         END IF;
 
         -- rainfall data
