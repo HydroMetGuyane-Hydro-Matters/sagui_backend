@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+
+echo Waiting for $POSTGRES_HOST:$POSTGRES_PORT to become available...
+while ! nc -z $POSTGRES_HOST $POSTGRES_PORT 2>/dev/null
+do
+    sleep 1;
+done
+
+echo "DB is ready !"

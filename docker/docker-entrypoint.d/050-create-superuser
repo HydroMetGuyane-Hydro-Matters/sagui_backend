@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e
+
+# usage: file_env VAR [DEFAULT]
+#    ie: file_env 'XYZ_DB_PASSWORD' 'example'
+# (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
+#  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
+file_env() {
+	local var="$1"
+	local fileVar="${var}_FILE"
+	local def="${2:-}"
+	if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
+		mysql_error "Both $var and $fileVar are set (but are exclusive)"
+	fi
+	local val="$def"
+	if [ "${!var:-}" ]; then
+		val="${!var}"
+	elif [ "${!fileVar:-}" ]; then
+		val="$(< "${!fileVar}")"
+	fi
+	export "$var"="$val"
+	unset "$fileVar"
+}
+
+if [[ -f initialized ]]; then
+  echo "SU already created"
+else
+  file_env 'DJANGO_SUPERUSER_PASSWORD'
+  if [[ DJANGO_SUPERUSER_PASSWORD ]]; then
+    user="${DJANGO_SUPERUSER_NAME:-jpommier}"
+    email="${DJANGO_SUPERUSER_EMAIL:-jeanpommier@pi-geosolutions.fr}"
+
+    python3 manage.py createsuperuser --no-input --username=$user --email=$email
+
+    # create a file as flag to know the SU has already been created
+    touch initialized
+  fi
+fi

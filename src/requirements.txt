@@ -1,7 +1,8 @@
-Django
-django-environ
-djangorestframework
-djangorestframework-gis
-drf-spectacular
-netCDF4
-psycopg2-binary
+Django~=4.0.5
+django-environ~=0.9.0
+djangorestframework~=3.13.1
+djangorestframework-gis~=1.0
+drf-spectacular~=0.22.1
+netCDF4~=1.6.0
+pandas~=1.4.3
+psycopg2-binary~=2.9.3
