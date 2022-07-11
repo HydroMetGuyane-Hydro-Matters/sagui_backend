@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OGRVRTDataSource>
+    <OGRVRTLayer name="drainage">
+        <SrcDataSource relativeToVRT="1">shapefiles/drainage.shp</SrcDataSource>
+        <SrcSql dialect="sqlite">SELECT round("ID") AS cat_id , * FROM drainage</SrcSql>
+        <!-- <SrcLayer>drainage_corrected</SrcLayer> -->
+    </OGRVRTLayer>
+    <OGRVRTLayer name="mini">
+        <SrcDataSource relativeToVRT="1">shapefiles/mini.shp</SrcDataSource>
+        <SrcLayer>mini</SrcLayer>
+        <!-- <SrcSql dialect="sqlite">SELECT * FROM mini</SrcSql> -->
+    </OGRVRTLayer>
+    <OGRVRTLayer name="catchments">
+        <SrcDataSource relativeToVRT="1">shapefiles/catchments.shp</SrcDataSource>
+        <SrcLayer>catchments</SrcLayer>
+        <!-- <SrcSql dialect="sqlite">SELECT * FROM mini</SrcSql> -->
+    </OGRVRTLayer>
+</OGRVRTDataSource>

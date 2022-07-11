@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OGRVRTDataSource>
+    <OGRVRTLayer name="drainage">
+        <SrcDataSource relativeToVRT="1">layers.gpkg</SrcDataSource>
+        <SrcSql dialect="sqlite">SELECT m.mini, d.geometry FROM drainage d JOIN mini m ON d.cat_id = m."CatID" </SrcSql>
+        <GeometryField name="geom" field="geometry"/>
+    </OGRVRTLayer>
+      <OGRVRTLayer name="catchments_temp">
+          <SrcDataSource relativeToVRT="1">layers.gpkg</SrcDataSource>
+          <!-- Complex query to remove some artefacts introduced by the MGB algo: duplicate polygons with ID=1 -->
+          <SrcSql dialect="sqlite">SELECT c.* FROM catchments c JOIN drainage d ON c."ID" = d.cat_id WHERE (c."ID" != 1) OR (ST_Intersects(d.GEOMETRY,c.geom)=1)</SrcSql>
+          <!-- <SrcSql dialect="sqlite">SELECT * FROM catchments c, drainage d  WHERE Intersects(d.geom,c.geom)</SrcSql> -->
+      </OGRVRTLayer>
+    <OGRVRTLayer name="catchments">
+        <SrcDataSource relativeToVRT="1">layers.gpkg</SrcDataSource>
+        <!-- Complex query to remove some artefacts introduced by the MGB algo: duplicate polygons with ID=1 -->
+        <SrcSql dialect="sqlite">SELECT c.geom, m.mini, m.sub FROM (SELECT c.* FROM catchments c JOIN drainage d ON c."ID" = d.cat_id WHERE (c."ID" != 1) OR (ST_Intersects(d.GEOMETRY,c.geom)=1)) c JOIN mini m ON c."ID"=m."CatID"</SrcSql>
+        <!--   <SrcSql dialect="sqlite">SELECT c.geom, m.mini, m.sub, m.width FROM catchments c JOIN mini m ON c."ID"=m."CatID"</SrcSql> -->
+    </OGRVRTLayer>
+  <OGRVRTLayer name="subs">
+      <SrcDataSource relativeToVRT="1">catchments</SrcDataSource>
+      <SrcSql dialect="sqlite">SELECT sub, ST_Union(geom) AS geom FROM catchments GROUP BY sub</SrcSql>
+  </OGRVRTLayer>
+    <OGRVRTLayer name="minibasins_data">
+        <SrcDataSource relativeToVRT="1">layers.gpkg</SrcDataSource>
+        <SrcSql dialect="sqlite">
+          SELECT
+            "Mini" AS mini,
+            "Ordem" AS ordem,
+            "Sub" AS sub,
+            "Width" AS width,
+            "Depth" AS depth
+          FROM mini
+        </SrcSql>
+    </OGRVRTLayer>
+    <OGRVRTLayer name="stations">
+        <SrcDataSource relativeToVRT="1">stations/stations_surveillance_guyane.xlsx</SrcDataSource>
+        <SrcSql dialect="sqlite">SELECT * FROM 'Feuille 1' WHERE river NOT NULL</SrcSql>
+        <!-- <Field name="id" src="minibasin_mgb" type="Integer"/> -->
+        <Field name="name" src="name_station" type="String"/>
+        <Field name="river" src="river" type="String"/>
+        <!-- <Field name="latitude" src="latitude*" type="Real"/>
+        <Field name="longitude" src="longitude*" type="Real"/> -->
+        <Field name="minibasin_id" src="minibasin_mgb" type="Integer"/>
+        <Field name="threshold_drought" src="threshold_drought**" type="Real"/>
+        <Field name="threshold_flood_low" src="threshold_flood_low**" type="Real"/>
+        <Field name="threshold_flood_mid" src="threshold_flood_mid**" type="Real"/>
+        <Field name="threshold_flood_high" src="threshold_flood_high**" type="Real"/>
+        <GeometryType>wkbPoint</GeometryType>
+        <LayerSRS>WGS84</LayerSRS>
+        <GeometryField name="geom" encoding="PointFromColumns" x="longitude*" y="latitude*"/>
+    </OGRVRTLayer>
+</OGRVRTDataSource>
