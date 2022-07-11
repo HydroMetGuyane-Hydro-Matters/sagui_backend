@@ -32,7 +32,7 @@ BEGIN
 			END AS level);
 END
 $func$;
-COMMENT ON FUNCTION guyane.anomaly_to_alert_level() IS 
+COMMENT ON FUNCTION guyane.anomaly_to_alert_level(double precision) IS 
 'Get alert level as string, depending on the anomaly level (percentage)';
 
 DROP FUNCTION IF EXISTS guyane.func_stations_with_flow_previ() CASCADE;

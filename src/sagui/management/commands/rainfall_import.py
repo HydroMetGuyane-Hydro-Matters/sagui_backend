@@ -108,9 +108,6 @@ class Command(BaseCommand):
                     with connection.cursor() as cursor:
                         cursor.copy_from(buffer, 'sagui_rainfall', sep=",", columns = ('cell_id','date', 'rain'))
 
-                    # records = [ RainFall(cell_id=x[0], date=x[1], rain=x[2]) for x in concatenated_df.to_numpy()]
-                    # self.stdout.write("Writing to DB")
-                    # RainFall.objects.bulk_update_or_create(records, ['rain'], match_field=['cell_id', 'date'])
                 except (Exception, psycopg2.DatabaseError) as error:
                     print(error)
                     errors += 1

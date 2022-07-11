@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Data associated to minibasins (for join with drainage or catchment data). Non-geo table as it is now',
                 'db_table': 'hyfaa_minibasins_data',
                 'ordering': ['mini'],
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.AddField(

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('mini', models.SmallIntegerField(help_text='Minibasin identifier. Called cell in HYFAA netcdf file, field mini in geospatial file', verbose_name='Minibasin ID')),
                 ('sub', models.SmallIntegerField(help_text='Subbasin identifier. Subbasin are the level above minibasins', verbose_name='Subbasin ID')),
-                ('geom', django.contrib.gis.db.models.fields.LineStringField(srid=4326)),
+                ('geom', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
             ],
             options={
                 'verbose_name': 'Drainage data (mini-sections of river/drainage) by minibasin',

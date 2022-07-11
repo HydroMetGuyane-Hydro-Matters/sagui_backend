@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.gis.db import models as geomodels
-from bulk_update_or_create import BulkUpdateOrCreateQuerySet
 
 # HYFAA Data models -> store them in hyfaa schema ?
 
@@ -130,7 +129,7 @@ class Catchments(geomodels.Model):
                 help_text='Minibasin identifier. Called ''cell'' in HYFAA netcdf file, field ''mini'' in geospatial file')
     sub = models.SmallIntegerField("Subbasin ID", null=False,
                 help_text='Subbasin identifier. Subbasin are the level above minibasins')
-    geom = geomodels.LineStringField()
+    geom = geomodels.PolygonField()
 
     class Meta:
         db_table = 'hyfaa_catchments'
@@ -177,9 +176,6 @@ class MinibasinsData(models.Model):
 
 # SAGUI-specific models
 class RainFall(models.Model):
-    # Support bulk_update_or_create actions, see https://pypi.org/project/django-bulk-update-or-create/
-    objects = BulkUpdateOrCreateQuerySet.as_manager()
-
     cell_id = models.SmallIntegerField("Minibasin ID", null=False, unique_for_date="date",
                 help_text='Cell identifier. Called ''cell'' in HYFAA netcdf file, field ''MINI'' in geospatial file')
     date = models.DateField("Date", null=False,

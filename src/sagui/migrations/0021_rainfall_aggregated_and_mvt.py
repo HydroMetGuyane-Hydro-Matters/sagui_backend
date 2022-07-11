@@ -69,7 +69,7 @@ ON geo.mini = agg.id
 -- Display rainfall data depending on the zoom level (show subbasins or minibasins)
 -- DROP FUNCTION guyane.mvt_catchments_with_rain_data;
 CREATE OR REPLACE
-FUNCTION guyane.mvt_catchments_with_rain_data(
+FUNCTION guyane.mvt_rainfall(
             z integer, x integer, y integer)
 RETURNS bytea
 AS $$

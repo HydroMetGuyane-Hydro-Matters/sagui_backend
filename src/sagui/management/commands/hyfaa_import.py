@@ -151,7 +151,7 @@ class Command(BaseCommand):
 
     def _publish_dataframe_to_db(self, df, ds):
         """
-        Publish the provided Pandas DataFrame into the DB. Using https://pypi.org/project/django-bulk-update-or-create/ to perform the upsert using Django ORM
+        Publish the provided Pandas DataFrame into the DB.
         Returns: - nb of errors if there were (0 if everything went well)
         Params:
           * df: pandas dataframe to publish

@@ -1,20 +1,13 @@
 from netCDF4 import Dataset
 import numpy as np
-import os
 import pandas as pd
-import psycopg2
-import psycopg2.extras as extras
 from time import perf_counter
 import datetime
-import sqlalchemy
 from io import StringIO
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import connection
-
-from sagui import utils
-from sagui import models
 
 
 class Command(BaseCommand):
