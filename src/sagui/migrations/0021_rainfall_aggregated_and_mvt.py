@@ -42,7 +42,7 @@ agg AS (
 	FROM rainfall_by_sub
 	GROUP BY id
 )
-SELECT geo.id, values, geom
+SELECT 'sub_'||geo.id AS id, values, geom
 FROM agg JOIN guyane.hyfaa_catchments_subbasins geo
 ON geo.id = agg.id
 ;
@@ -57,7 +57,7 @@ rainfall_agg_data AS (
 	WHERE "date" in (SELECT * FROM latest_dates)
 	GROUP BY cell_id
 )
-SELECT agg.id, values, geom
+SELECT 'mini_'||agg.id AS id, values, geom
 FROM rainfall_agg_data agg JOIN guyane.hyfaa_catchments geo
 ON geo.mini = agg.id
 ;
