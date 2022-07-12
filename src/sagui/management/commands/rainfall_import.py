@@ -73,6 +73,7 @@ class Command(BaseCommand):
         self.only_last_n_days = kwargs.get('only_last_n_days')
         self.commit_page_size = kwargs.get('commit_page_size')
 
+        self.stdout.write("Scanning folder {}".format(self.rootpath))
         new_files = self._get_files_list()
         # truncate the extraction to the last n days (useful when you are in a hurry)
         if self.only_last_n_days:
@@ -159,7 +160,7 @@ class Command(BaseCommand):
         last_updated_text = last_updated_without_errors.strftime("%Y%m%dT%H%M")
         # regex = '(.*)DATA_([0-9T]*)_'+last_updated_text+'([0-9]*)_([0-9]*)\\.nc'
         regex2 = '.*DATA_[0-9T]*_(\d{8}T\d{4})[0-9]*_[0-9]*\\.nc'
-        all_filenames = glob.glob('/home/jean/dev/IRD/hyfaa-mgb-platform/hyfaa-scheduler/work_configurations/operational_guyane_gsmap/databases/forcing_onmesh_db/data_store/*.nc')
+        all_filenames = glob.glob('{path}/*.nc'.format(path=self.rootpath))
         new_files = sorted([s for s in all_filenames if re.search(regex2, s).group(1) > last_updated_text])
         if not new_files:
             return None
