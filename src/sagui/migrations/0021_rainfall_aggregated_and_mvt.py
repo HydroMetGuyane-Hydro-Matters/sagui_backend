@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
 CREATE OR REPLACE VIEW guyane.hyfaa_catchments_subbasins AS
 SELECT sub AS id, array_agg(mini) AS minibasins,ST_Union(geom)::geometry(Geometry, 4326) AS geom
 FROM guyane.hyfaa_catchments
-GROUP BY id;
+GROUP BY sub;
 
 DROP MATERIALIZED VIEW IF EXISTS guyane.rainfall_subbasin_aggregated_geo;
 CREATE MATERIALIZED VIEW guyane.rainfall_subbasin_aggregated_geo AS 

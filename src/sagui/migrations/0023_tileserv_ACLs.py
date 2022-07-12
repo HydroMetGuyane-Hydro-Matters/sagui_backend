@@ -20,8 +20,8 @@ GRANT SELECT ON TABLE guyane.hyfaa_drainage TO tileserv;
 GRANT SELECT ON TABLE guyane.hyfaa_data_aggregated_geo TO tileserv;
 --GRANT SELECT ON TABLE guyane.stations_with_flow_alerts TO tileserv;
 --GRANT SELECT ON TABLE guyane.stations_with_flow_previ TO tileserv;
---GRANT SELECT ON TABLE guyane.rainfall_minibasin_aggregated_geo TO tileserv;
---GRANT SELECT ON TABLE guyane.rainfall_subbasin_aggregated_geo TO tileserv;
+GRANT SELECT ON TABLE guyane.rainfall_minibasin_aggregated_geo TO tileserv;
+GRANT SELECT ON TABLE guyane.rainfall_subbasin_aggregated_geo TO tileserv;
 GRANT EXECUTE ON FUNCTION guyane.mvt_rainfall TO tileserv;
         """)
     ]
