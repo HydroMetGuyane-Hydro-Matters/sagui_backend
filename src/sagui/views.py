@@ -12,7 +12,7 @@ from django.contrib.gis.geos import Point
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 from sagui import serializers, models
-from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts
+from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts, SaguiConfig
 
 logger = logging.getLogger(__name__)
 
@@ -327,12 +327,18 @@ class StationFlowRecordsById(generics.GenericAPIView):
         nb_days_backward = int(nb_days_backward)
 
         # Get last date available from the DB
-        ref_date = models.DataAssimilated.objects.latest('date').date
+        ref_date = None
+        try:
+            ref_date = models.DataAssimilated.objects.latest('date').date
+        except:
+            logger.error("Impossible to retrieve last date for data from hyfaa_data_assimilated table. Are you sure it's not empty ?")
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         from_date = ref_date - timedelta(days=nb_days_backward)
 
         # 1. Get station records
         station = models.Stations.objects.filter(id__exact=id)
         if not station:
+            logger.error("No record found for station with id ", id)
             return Response(status=status.HTTP_400_BAD_REQUEST)
         # get station record as dict (will serve for threshold data)
         station_as_dict = station.values()[0]
@@ -348,6 +354,9 @@ class StationFlowRecordsById(generics.GenericAPIView):
         forecast_records = models.DataForecast.objects.filter(cell_id__exact=cell_id,
                                                      date__gt=ref_date,
                                                      ).order_by('date')
+
+        if not forecast_records:
+            logger.error("No forecasts found for station with id ", id)
         forecast_data = [{
                         "source": "forecast",
                         "date": r.date.strftime("%Y-%m-%d"),
@@ -390,15 +399,21 @@ class Dashboard(generics.GenericAPIView):
         # Get anomaly stats and codes over the stations
         anomaly = None
         try:
+            # Try to fetch the name of the table for source data from the saguiconfig table
+            tablename = 'hyfaa_data_assimilated'
+            config = SaguiConfig.objects.first()
+            if config:
+                tablename = 'hyfaa_data_' + config.use_dataset
+
             with connection.cursor() as cursor:
                 query = '''
 SELECT  ROUND(AVG(flow_anomaly)), guyane.anomaly_to_alert_level(AVG(flow_anomaly)) AS code_avg, 
         ROUND(MIN(flow_anomaly)), guyane.anomaly_to_alert_level(MIN(flow_anomaly)) AS code_min, 
         ROUND(MAX(flow_anomaly)), guyane.anomaly_to_alert_level(MAX(flow_anomaly)) AS code_max
-FROM guyane.hyfaa_data_assimilated a, guyane.hyfaa_stations s 
+FROM guyane.{tbl} a, guyane.hyfaa_stations s 
 WHERE a.cell_id = s.minibasin_id 
-AND a."date" IN (SELECT DISTINCT "date" FROM guyane.hyfaa_data_assimilated ORDER BY "date" DESC LIMIT 1);
-                '''
+AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC LIMIT 1);
+                '''.format(tbl=tablename)
                 cursor.execute(query)
                 rec = cursor.fetchone()
         except Exception as error:
@@ -423,7 +438,8 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.hyfaa_data_assimilated ORDER
         with connection.cursor() as cursor:
             cursor.execute('SELECT levels->0->>\'level\' AS l FROM guyane.stations_with_flow_alerts')
             recs = cursor.fetchall()
-        rec_levels = [r[0] for r in recs]
+
+        rec_levels = [r[0] for r in recs] if recs else []
         global_alert_level ='undefined'
         for lev in flow_alert_levels:
             if lev in rec_levels:

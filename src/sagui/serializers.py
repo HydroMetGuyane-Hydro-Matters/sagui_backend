@@ -11,6 +11,8 @@ from .models import Stations, StationsWithFlowAlerts, StationsWithFlowPrevi
 
 
 class StationsWithFlowAlertsGeoSerializer(gis_serializers.GeoFeatureModelSerializer):
+    geom = GeometryField()
+
     class Meta:
         model = StationsWithFlowAlerts
         geo_field = "geom"
@@ -18,6 +20,8 @@ class StationsWithFlowAlertsGeoSerializer(gis_serializers.GeoFeatureModelSeriali
 
 
 class StationsWithFlowPreviGeoSerializer(gis_serializers.GeoFeatureModelSerializer):
+    geom = GeometryField()
+
     class Meta:
         model = StationsWithFlowPrevi
         geo_field = "geom"
