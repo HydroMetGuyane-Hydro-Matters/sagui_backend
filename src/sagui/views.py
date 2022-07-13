@@ -1,14 +1,19 @@
 from collections import Counter
+import csv
 from datetime import date, timedelta, datetime
 import logging
 
 from django.core import serializers
 from django.db import connection
+from django.http import HttpResponse
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
+from rest_framework.settings import api_settings
+from rest_framework_csv.renderers import CSVRenderer
+from rest_framework.views import APIView
 from django.contrib.gis.geos import Point
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
@@ -46,12 +51,6 @@ class StationsPreviList(generics.ListAPIView):
     serializer_class = serializers.StationsWithFlowPreviGeoSerializer
     pagination_class = LargeResultsSetPagination
     queryset = models.StationsWithFlowPrevi.objects.all()
-
-#
-# class StationsAsGeojson(generics.ListAPIView):
-#     serializer_class = StationsWithFlowAlertsGeoSerializer
-#     pagination_class = LargeResultsSetPagination
-#     queryset = StationsWithFlowAlerts.objects.all()
 
 
 def _get_minibasin_id_from_station_id(id):
@@ -137,6 +136,8 @@ class StationsPreviRecordsById(generics.GenericAPIView):
      (use the id field as can be seen on /api/v1/flow_previ/stations).
     """
     serializer_class=serializers.StationFlowPreviRecordsSerializer
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES) + (CSVRenderer,)
+
     @extend_schema(
         # extra parameters added to the schema
         parameters=[
@@ -201,6 +202,12 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         } for d in dates_list]
 
         # 5. Generate the output structure and send it
+        # Handle special case where format is CSV (serializer cannot automatically generate a usable CSV here)
+        if format == 'csv' or request.query_params.get('format', None) == 'csv'\
+                or request.accepted_media_type == 'text/csv':
+            return self._response_as_csv(id, [mgb_or_assim_data, forecast_data])
+        
+
         station_record = {
             'id': station.id,
             'minibasin': station.minibasin_id,
@@ -218,6 +225,23 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         }
         serializer = serializers.StationFlowPreviRecordsSerializer(station_record, many=False)
         return Response(serializer.data)
+
+
+    def _response_as_csv(self, id, datasets):
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(
+            content_type='text/csv',
+            headers={
+                'Content-Disposition': 'attachment; filename="station_{id}_previ_record.csv"'.format(id=id)
+            },
+        )
+        writer = csv.writer(response)
+        writer.writerow(['source', 'date', 'flow', 'flow_mad'])
+        for dataset in datasets:
+            for r in dataset:
+                writer.writerow([r.get('source'), r.get('date'), r.get('flow'), r.get('flow_mad')])
+
+        return response
 
 
 class StationFlowRecordsById(generics.GenericAPIView):

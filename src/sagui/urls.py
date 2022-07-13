@@ -23,4 +23,4 @@ urlpatterns = [
     path('api/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
 ]
 
-urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html', 'geojson'])
+urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html', 'csv'])
