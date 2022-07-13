@@ -38,8 +38,8 @@ CREATE OR REPLACE FUNCTION guyane.publication_post_processing()
         IF NEW."tablename" LIKE '%data_forecast' THEN
             RAISE INFO 'Triggering post-processing on forecast table. Please wait...';
             PERFORM guyane.update_forecast(10);
-            REFRESH  MATERIALIZED VIEW guyane.guyane.hyfaa_forecast_with_assimilated;
-            REFRESH  MATERIALIZED VIEW guyane.guyane.hyfaa_forecast_with_mgbstandard;
+            REFRESH  MATERIALIZED VIEW guyane.hyfaa_forecast_with_assimilated;
+            REFRESH  MATERIALIZED VIEW guyane.hyfaa_forecast_with_mgbstandard;
             REFRESH  MATERIALIZED VIEW guyane.hyfaa_forecast_with_assimilated_aggregate_geo;
             REFRESH  MATERIALIZED VIEW guyane.hyfaa_forecast_with_mgbstandard_aggregate_geo;
         END IF;
