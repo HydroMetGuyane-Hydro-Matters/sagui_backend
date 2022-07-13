@@ -46,6 +46,11 @@ class DataForecast(AbstractHyfaaData):
     flow_stddev = models.FloatField(null=True, help_text='Stream flow. Standard deviation')
     flow_mad = models.FloatField(null=True, help_text='Stream flow. Median absolute  deviation')
 
+    # Same as MgbStandard
+    flow_expected = models.FloatField(null=True, help_text='Expected value. Calculated using a floating median, over the flow_median values taken on the day surrounding the current day (+ or - 10 days around), during the previous years. Computed from data taken in assimilated table')
+    flow_anomaly = models.FloatField(null=True, help_text='Represents the anomaly compared to expected data. Formula is 100 * (anomaly - expected) / expected')
+
+
     class Meta:
         db_table = 'hyfaa_data_forecast'
         # managed = False
