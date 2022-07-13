@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import date, timedelta, datetime
 import logging
 
@@ -32,6 +33,10 @@ class LargeResultsSetPagination(PageNumberPagination):
 
 
 class StationsAlertList(generics.ListAPIView):
+    """
+    Get the list of stations, as geojson.
+    For each station, a levels dictionnary provides the prevision levels on this station, 
+    """
     serializer_class = serializers.StationsWithFlowAlertsGeoSerializer
     pagination_class = LargeResultsSetPagination
     queryset = models.StationsWithFlowAlerts.objects.all()
@@ -127,7 +132,9 @@ def _get_mgb_or_assim_data(cell_id, start_date, end_date, with_expected=False):
 
 class StationsPreviRecordsById(generics.GenericAPIView):
     """
-    Get Station records for flow previ graphics
+    Get Station records for flow previ graphics:
+    retrieve the 10 last days of flow data + append the forecast data.
+     (use the id field as can be seen on /api/v1/flow_previ/stations).
     """
     serializer_class=serializers.StationFlowPreviRecordsSerializer
     @extend_schema(
@@ -209,103 +216,10 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         return Response(serializer.data)
 
 
-def get_station_mgbstandard_record(cell_id, ref_date, duration=365):
-    """
-    Get data from mgb_standard dataset
-    :param id: cell id
-    :param ref_date: latest date to fetch
-    :param duration: duration, in days (backwards)
-    :return:
-    """
-    from_date = ref_date - timedelta(days=duration)
-    records = models.DataMgbStandard.objects.filter(cell_id__exact=cell_id,
-                                     date__gt=from_date,
-                                     date__lte=ref_date,
-                                     ).order_by('date')
-    data_dict = {
-        'mgbstandard': [ {
-              "date": r.date.strftime("%Y-%m-%d"),
-              "flow": round(r.flow_mean),
-              "expected": round(r.flow_expected),
-          } for r in records ]
-    }
-    return data_dict
-
-
-def get_station_assimilated_record(cell_id, ref_date, duration=365):
-    """
-    Get data from mgb_standard dataset
-    :param id: cell id
-    :param ref_date: latest date to fetch
-    :param duration: duration, in days (backwards)
-    :return:
-    """
-    from_date = ref_date - timedelta(days=duration)
-    records = models.DataAssimilated.objects.filter(cell_id__exact=cell_id,
-                                     date__gt=from_date,
-                                     date__lte=ref_date,
-                                     ).order_by('date')
-    data_dict = {
-        'assimilated': [ {
-              "date": r.date.strftime("%Y-%m-%d"),
-              "flow": round(r.flow_median),
-              "flow_mad": round(r.flow_mad),
-              "expected": round(r.flow_expected),
-          } for r in records ]
-    }
-    return data_dict
-
-
-def get_station_forecast_record(cell_id, ref_date, duration=365):
-    """
-    Get data from mgb_standard dataset
-    :param id: cell id
-    :param ref_date: latest date to fetch
-    :param duration: duration, in days (backwards)
-    :return:
-    """
-    max_recs = min(duration, 20)
-    from_date = ref_date - timedelta(days=max_recs)
-    # Retrieve some latest mgb_standard records and append forecast data after them
-    mgbrecords = models.DataMgbStandard.objects.filter(cell_id__exact=cell_id,
-                                     date__gt=from_date,
-                                     date__lte=ref_date,
-                                     ).order_by('date')
-    records = models.DataForecast.objects.filter(cell_id__exact=cell_id,
-                                     date__gt=ref_date,
-                                     ).order_by('date')
-
-    data_dict = {
-        'forecast': [ {
-              "source": "mgbstandard",
-              "date": r.date.strftime("%Y-%m-%d"),
-              "flow": round(r.flow_mean),
-              "flow_mad": 0,
-          } for r in mgbrecords
-        ] +
-        [ {
-              "source": "forecast",
-              "date": r.date.strftime("%Y-%m-%d"),
-              "flow": round(r.flow_median),
-              "flow_mad": round(r.flow_mad),
-          } for r in records
-        ]
-    }
-
-    return data_dict
-
-
-def get_records_full_mode(id, ref_date, duration):
-    data_dict = {}
-    data_dict['mgbstandard'] = get_station_mgbstandard_record(id, ref_date, duration)['mgbstandard']
-    data_dict['assimilated'] = get_station_assimilated_record(id, ref_date, duration)['assimilated']
-    data_dict['forecast'] = get_station_forecast_record(id, ref_date, duration)['forecast']
-    return data_dict
-
-
 class StationFlowRecordsById(generics.GenericAPIView):
     """
-    Get Station records
+    Get the flow data on the station (use the id field as can be seen on /api/v1/flow_alert/stations).
+    Retrieves the n last days of data, where n is defined by the duration parameter, in days
     """
     serializer_class=serializers.StationFlowAlertRecordsSerializer
     @extend_schema(
@@ -434,28 +348,32 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
             })
 
         # 2. flow_alerts entry
-        flow_alert_levels = ['d3', 'd2', 'd1', 'n', 'f1', 'f2', 'f3']
+        # flow_alert_levels = ['f3', 'f2', 'f1', 'd3', 'd2', 'd1', 'n']
+        flow_alert_levels = ['f3', 'f2', 'f1', 'd2', 'n']
         with connection.cursor() as cursor:
             cursor.execute('SELECT levels->0->>\'level\' AS l FROM guyane.stations_with_flow_alerts')
             recs = cursor.fetchall()
 
         rec_levels = [r[0] for r in recs] if recs else []
+        levels_count = Counter(rec_levels)
+        levels_stats = { k:levels_count[k] for k in flow_alert_levels}
         global_alert_level ='undefined'
         for lev in flow_alert_levels:
             if lev in rec_levels:
                 global_alert_level = lev
                 break
+
         dash_entries.append({
             "id": "flow_alerts",
             "alert_code": global_alert_level,
-            "attributes": {}
+            "attributes": levels_stats
         })
 
         # 3. Rain alert entry
         dash_entries.append({
             "id": "rain_alerts",
             "alert_code": "undefined",
-            "attributes": {}
+            "attributes": levels_stats
         })
 
         # 4. Atmospheric alert entry
