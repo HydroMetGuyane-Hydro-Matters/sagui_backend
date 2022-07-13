@@ -124,7 +124,7 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION guyane.func_hyfaa_data_aggregated_geo() IS 
 'Provide aggregated data as avialable on materialized view, but use the source data as defined in saguiconfig table.';
 
-DROP VIEW guyane.hyfaa_data_aggregated_geo;
+DROP VIEW IF EXISTS guyane.hyfaa_data_aggregated_geo;
 CREATE OR REPLACE VIEW guyane.hyfaa_data_aggregated_geo AS
 SELECT cell_id, val as "values", width, depth, geom::geometry(Geometry,4326) AS geom FROM guyane.func_hyfaa_data_aggregated_geo();   
 COMMENT ON VIEW guyane.hyfaa_data_aggregated_geo IS
