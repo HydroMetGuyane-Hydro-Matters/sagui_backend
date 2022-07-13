@@ -43,10 +43,15 @@ class ThresholdSerializer(serializers.Serializer):
     threshold_flood_high = serializers.FloatField(required=False)
 
 
+class StationFlowPreviReferencesSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    data = FlowRecordSerializer(many=True)
+
+
 class StationFlowPreviDataSerializer(serializers.Serializer):
     flow = FlowRecordSerializer(many=True)
     forecast = FlowRecordSerializer(many=True)
-    reference = FlowRecordSerializer(many=True)
+    references = StationFlowPreviReferencesSerializer(many=True)
 
 
 class StationFlowPreviRecordsSerializer(serializers.Serializer):

@@ -195,7 +195,7 @@ class StationsPreviRecordsById(generics.GenericAPIView):
             str(r.day_of_year): r.value for r in reference_records
         }
         reference_data = [{
-            "source": "reference",
+            "source": '2010-2020',
             "date": d.strftime("%Y-%m-%d"),
             "flow": round(reference_records_as_dict[d.strftime('%j').lstrip("0")]),
         } for d in dates_list]
@@ -209,7 +209,11 @@ class StationsPreviRecordsById(generics.GenericAPIView):
             'data': {
                 'flow': mgb_or_assim_data,
                 'forecast': forecast_data,
-                'reference': reference_data,
+                'references': [{
+                    'id': '2010-2020',
+                    'data': reference_data
+                },
+                ],
             },
         }
         serializer = serializers.StationFlowPreviRecordsSerializer(station_record, many=False)
@@ -370,6 +374,8 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
         })
 
         # 3. Rain alert entry
+        # we will use thresholds 5, 20 and 50mm
+
         dash_entries.append({
             "id": "rain_alerts",
             "alert_code": "undefined",
