@@ -103,7 +103,7 @@ DROP FUNCTION IF EXISTS guyane.func_hyfaa_data_aggregated_geo() CASCADE;
 CREATE OR REPLACE FUNCTION guyane.func_hyfaa_data_aggregated_geo()
 RETURNS TABLE(cell_id smallint,
                 val json,
-                ordem bigint,
+                ordem smallint,
                 width numeric,
                 depth numeric,
 			    geom geometry(LineString,4326)
@@ -124,6 +124,7 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION guyane.func_hyfaa_data_aggregated_geo() IS 
 'Provide aggregated data as avialable on materialized view, but use the source data as defined in saguiconfig table.';
 
+DROP VIEW guyane.hyfaa_data_aggregated_geo;
 CREATE OR REPLACE VIEW guyane.hyfaa_data_aggregated_geo AS
 SELECT cell_id, val as "values", width, depth, geom::geometry(Geometry,4326) AS geom FROM guyane.func_hyfaa_data_aggregated_geo();   
 COMMENT ON VIEW guyane.hyfaa_data_aggregated_geo IS
@@ -136,7 +137,7 @@ DROP FUNCTION IF EXISTS guyane.func_hyfaa_forecast_aggregated_geo() CASCADE;
 CREATE OR REPLACE FUNCTION guyane.func_hyfaa_forecast_aggregated_geo()
 RETURNS TABLE(cell_id smallint,
                 val json,
-                ordem bigint,
+                ordem smallint,
                 width numeric,
                 depth numeric,
 			    geom geometry(LineString,4326)
@@ -167,6 +168,8 @@ depending on the dataset selected in saguiconfig table.';
 GRANT SELECT ON TABLE guyane.sagui_saguiconfig TO tileserv;
 GRANT SELECT ON TABLE guyane.hyfaa_forecast_with_assimilated_aggregate_geo TO tileserv;
 GRANT SELECT ON TABLE guyane.hyfaa_forecast_with_mgbstandard_aggregate_geo TO tileserv;
+GRANT SELECT ON TABLE guyane.hyfaa_data_with_assimilated_aggregate_geo TO tileserv;
+GRANT SELECT ON TABLE guyane.hyfaa_data_with_mgbstandard_aggregate_geo TO tileserv;
 GRANT SELECT ON TABLE guyane.hyfaa_data_aggregated_geo TO tileserv;
 GRANT SELECT ON TABLE guyane.hyfaa_forecast_aggregated_geo TO tileserv;
         """),
