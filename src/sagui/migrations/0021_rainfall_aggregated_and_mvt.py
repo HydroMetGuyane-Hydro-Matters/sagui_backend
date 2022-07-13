@@ -20,47 +20,51 @@ GROUP BY sub;
 
 DROP MATERIALIZED VIEW IF EXISTS guyane.rainfall_subbasin_aggregated_geo;
 CREATE MATERIALIZED VIEW guyane.rainfall_subbasin_aggregated_geo AS 
-WITH latest_dates AS (
-	SELECT DISTINCT "date" FROM guyane.sagui_rainfall ORDER BY "date" DESC LIMIT 15
-), 
-rainfall_data AS (
-	SELECT * FROM guyane.sagui_rainfall
-	WHERE "date" in (SELECT * FROM latest_dates)
-),
-rainfall_catchments AS (
-	SELECT c.mini, r."date", r.rain, c.sub
-	FROM rainfall_data r JOIN guyane.hyfaa_catchments c
-	ON r.cell_id = c.mini
-),
-rainfall_by_sub AS (
-	SELECT sub AS id, "date", AVG(rain) AS rain
-	FROM rainfall_catchments
-	GROUP BY sub, "date"
-),
-agg AS (
-	SELECT id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values
-	FROM rainfall_by_sub
-	GROUP BY id
-)
-SELECT 'sub_'||geo.id AS id, values, geom
-FROM agg JOIN guyane.hyfaa_catchments_subbasins geo
-ON geo.id = agg.id
+    WITH latest_dates AS (
+        SELECT DISTINCT "date" FROM guyane.sagui_rainfall ORDER BY "date" DESC LIMIT 15
+    ), 
+    rainfall_data AS (
+        SELECT * FROM guyane.sagui_rainfall
+        WHERE "date" in (SELECT * FROM latest_dates)
+    ),
+    rainfall_catchments AS (
+        SELECT c.mini, r."date", r.rain, c.sub
+        FROM rainfall_data r JOIN guyane.hyfaa_catchments c
+        ON r.cell_id = c.mini
+    ),
+    rainfall_by_sub AS (
+        SELECT sub AS id, "date", AVG(rain) AS rain
+        FROM rainfall_catchments
+        GROUP BY sub, "date"
+    ),
+    agg AS (
+        SELECT id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values
+        FROM rainfall_by_sub
+        GROUP BY id
+    )
+    SELECT 'sub_'||geo.id AS id, values, geom
+    FROM agg JOIN guyane.hyfaa_catchments_subbasins geo
+    ON geo.id = agg.id
 ;
+COMMENT ON MATERIALIZED VIEW guyane.rainfall_subbasin_aggregated_geo IS 
+'Aggregated rainfall data (json object) at subbasin geospatial level';
 
 DROP MATERIALIZED VIEW IF EXISTS guyane.rainfall_minibasin_aggregated_geo;
 CREATE MATERIALIZED VIEW guyane.rainfall_minibasin_aggregated_geo AS 
-WITH latest_dates AS (
-	SELECT DISTINCT "date" FROM guyane.sagui_rainfall ORDER BY "date" DESC LIMIT 15
-), 
-rainfall_agg_data AS (
-	SELECT cell_id AS id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values FROM guyane.sagui_rainfall
-	WHERE "date" in (SELECT * FROM latest_dates)
-	GROUP BY cell_id
-)
-SELECT 'mini_'||agg.id AS id, values, geom
-FROM rainfall_agg_data agg JOIN guyane.hyfaa_catchments geo
-ON geo.mini = agg.id
+    WITH latest_dates AS (
+        SELECT DISTINCT "date" FROM guyane.sagui_rainfall ORDER BY "date" DESC LIMIT 15
+    ), 
+    rainfall_agg_data AS (
+        SELECT cell_id AS id, json_agg(json_build_object('date', "date", 'rain', round(rain)) ORDER BY "date" DESC) AS values FROM guyane.sagui_rainfall
+        WHERE "date" in (SELECT * FROM latest_dates)
+        GROUP BY cell_id
+    )
+    SELECT 'mini_'||agg.id AS id, values, geom
+    FROM rainfall_agg_data agg JOIN guyane.hyfaa_catchments geo
+    ON geo.mini = agg.id
 ;
+COMMENT ON MATERIALIZED VIEW guyane.rainfall_minibasin_aggregated_geo IS 
+'Aggregated rainfall data (json object) at minibasin geospatial level';
         """),
         migrations.RunSQL(
         """
@@ -109,6 +113,8 @@ $$
 LANGUAGE 'plpgsql'
 STABLE
 PARALLEL SAFE;
+COMMENT ON FUNCTION guyane.mvt_rainfall(z integer, x integer, y integer) IS 
+'Exposes rainfall data. Source of data is adjusted depending on the zoom level';
         """),
         migrations.RunSQL(
             """
@@ -143,6 +149,7 @@ CREATE OR REPLACE FUNCTION guyane.publication_post_processing()
 
         RETURN null;
     END $$;
+
 
             """),
     ]

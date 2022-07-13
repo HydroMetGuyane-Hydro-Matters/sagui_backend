@@ -53,12 +53,14 @@ BEGIN
 	INTO dataset_tbl_name;
 	RAISE INFO 'dataset_tbl_name %', dataset_tbl_name;
 		
-	query1 := 'WITH stations AS (SELECT s.id, s.name, s.river, s.minibasin_id AS minibasin_id, s.geom, d."date", 
-				guyane.anomaly_to_alert_level(flow_anomaly) AS level
-				FROM guyane.hyfaa_stations s INNER JOIN %s d
-				ON s.minibasin_id = d.cell_id
-				WHERE d."date" > (SELECT MAX("date") FROM %s) - ''15 days''::interval
-				ORDER BY s.name, d."date" DESC)
+	query1 := 'WITH stations AS (
+                SELECT s.id, s.name, s.river, s.minibasin_id AS minibasin_id, s.geom, d."date", 
+                    guyane.anomaly_to_alert_level(flow_anomaly) AS level
+                FROM guyane.hyfaa_stations s INNER JOIN %s d
+                    ON s.minibasin_id = d.cell_id
+                WHERE d."date" > (SELECT MAX("date") FROM %s) - ''10 days''::interval
+                ORDER BY s.name, d."date" DESC
+            )
 			SELECT id, name, river, minibasin_id, jsonb_agg(jsonb_build_object(''date'',"date",''level'',level)) AS levels, geom
 			FROM stations
 			GROUP BY id, name, river, minibasin_id, geom';
@@ -66,7 +68,7 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION guyane.func_stations_with_flow_previ() IS 
-'Append prévision levels on stations data';
+'Append forecast levels on stations data';
 
 CREATE VIEW guyane.stations_with_flow_previ AS
 SELECT * FROM guyane.func_stations_with_flow_previ();            

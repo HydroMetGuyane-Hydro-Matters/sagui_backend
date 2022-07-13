@@ -34,7 +34,7 @@ BEGIN
 	
 	IF dataset_tbl_name = 'guyane.hyfaa_data_assimilated' 
 	THEN match_field:='flow_median';
-	ELSE match_field:='flow_mean'; --means we sue mgbstandard dataset
+	ELSE match_field:='flow_mean'; --means we use mgbstandard dataset
 	END IF;
     --RAISE INFO 'match_field %', match_field;
 	
