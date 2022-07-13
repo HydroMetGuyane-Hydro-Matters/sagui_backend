@@ -336,7 +336,7 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
 
         if rec:
             # get the code for the anomaly with highest asbsolute value
-            global_alert_level = rec[3] if abs(rec[2]) > abs(rec[4]) else rec[5]
+            global_alert_level = rec[1]
             dash_entries.append({
                 "id": "flow_previ",
                 "alert_code": global_alert_level,
@@ -373,7 +373,7 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
         dash_entries.append({
             "id": "rain_alerts",
             "alert_code": "undefined",
-            "attributes": levels_stats
+            "attributes": {}
         })
 
         # 4. Atmospheric alert entry
