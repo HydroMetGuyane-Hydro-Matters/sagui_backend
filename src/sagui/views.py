@@ -2,6 +2,7 @@ from collections import Counter
 import csv
 from datetime import date, timedelta, datetime
 import logging
+import statistics
 
 from django.core import serializers
 from django.db import connection
@@ -329,7 +330,7 @@ class StationFlowRecordsById(generics.GenericAPIView):
         return Response(serializer.data)
 
 
-class Dashboard(generics.GenericAPIView):
+class Dashboard(APIView):
     """
     Get data for dashboard display
     """
@@ -399,10 +400,30 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
 
         # 3. Rain alert entry
         # we will use thresholds 5, 20 and 50mm
+        alert_levels = [
+            (50, 'r3'),
+            (20, 'r2'),
+            (5, 'r1'),
+            (0, 'n'),
+        ]
+        alert_code = 'undefined'
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT ROUND(avg((values->0->>\'rain\')::numeric),1) AS l FROM guyane.rainfall_minibasin_aggregated_geo')
+                rec = cursor.fetchone()
+                mean_rain = rec[0] if rec else None
+                for lev in alert_levels:
+                    if mean_rain >= lev[0]:
+                        alert_code = lev[1]
+                        break
+        except Exception as error:
+            logger.error("Exception while fetching Dashboard data:", error)
+            logger.error("Exception TYPE:", type(error))
 
         dash_entries.append({
             "id": "rain_alerts",
-            "alert_code": "undefined",
+            "alert_code": alert_code,
             "attributes": {}
         })
 
