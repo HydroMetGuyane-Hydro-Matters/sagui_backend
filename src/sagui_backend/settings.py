@@ -161,11 +161,12 @@ REST_FRAMEWORK = {
 }
 SPECTACULAR_SETTINGS = {
     'TITLE': 'SAGUI API',
-    'DESCRIPTION': 'Sagui is an awesome project',
+    'DESCRIPTION': 'Sig d’Alerte pour la Guyane sur l’eaU et l’aIr',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     # OTHER SETTINGS
     'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
+    'SORT_OPERATION_PARAMETERS': False,
 }
 
 SAGUI_SETTINGS = {

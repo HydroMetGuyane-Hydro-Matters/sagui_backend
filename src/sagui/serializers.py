@@ -71,7 +71,7 @@ class StationFlowAlertRecordsSerializer(serializers.Serializer):
     minibasin = serializers.IntegerField()
     city = serializers.CharField()
     data = StationFlowAlertDataSerializer()
-    thresholds = ThresholdSerializer()
+    thresholds = ThresholdSerializer(many=True)
 
 
 class DashboardEntrySerializer(serializers.Serializer):
