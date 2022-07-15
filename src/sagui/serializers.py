@@ -10,22 +10,28 @@ from .models import Stations, StationsWithFlowAlerts, StationsWithFlowPrevi
 #         fields = ('id', 'name', 'river', 'minibasin', 'levels')
 
 
-class StationsWithFlowAlertsGeoSerializer(gis_serializers.GeoFeatureModelSerializer):
+class StationsWithFlowAlertsGeoSerializer(gis_serializers.GeoFeatureModelSerializer, serializers.HyperlinkedModelSerializer):
     geom = GeometryField()
 
     class Meta:
         model = StationsWithFlowAlerts
         geo_field = "geom"
-        fields = ('id', 'name', 'river', 'minibasin', 'levels')
+        fields = ('url', 'id', 'name', 'river', 'minibasin', 'levels')
+        extra_kwargs = {
+            'url': {'view_name': 'flow-alert-get-stationrecords-by-id', 'lookup_field': 'id'},
+        }
 
 
-class StationsWithFlowPreviGeoSerializer(gis_serializers.GeoFeatureModelSerializer):
+class StationsWithFlowPreviGeoSerializer(gis_serializers.GeoFeatureModelSerializer, serializers.HyperlinkedModelSerializer):
     geom = GeometryField()
 
     class Meta:
         model = StationsWithFlowPrevi
         geo_field = "geom"
-        fields = ('id', 'name', 'river', 'minibasin', 'levels')
+        fields = ('url', 'id', 'name', 'river', 'minibasin', 'levels')
+        extra_kwargs = {
+            'url': {'view_name': 'flow-previ-get-stationrecords-by-id', 'lookup_field': 'id'},
+        }
 
 
 class FlowRecordSerializer(serializers.Serializer):

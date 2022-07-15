@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({
-        'stations-list': reverse('get-stations-list', request=request, format=format),
+        'dashboard': reverse('dashboard', request=request, format=format),
+        'flow-previ-stations-list': reverse('flow-previ-get-stations-list', request=request, format=format),
+        'flow-alerts-stations-list': reverse('flow-alerts-get-stations-list', request=request, format=format),
         'swagger-ui': reverse('swagger-ui', request=request, format=format),
         'openapi-schema': reverse('openapi-schema', request=request, format=format),
     })
@@ -138,6 +140,7 @@ class StationsPreviRecordsById(generics.GenericAPIView):
     """
     serializer_class=serializers.StationFlowPreviRecordsSerializer
     renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES) + (CSVRenderer,)
+    lookup_field = 'id'
 
     @extend_schema(
         # extra parameters added to the schema
@@ -251,6 +254,8 @@ class StationFlowRecordsById(generics.GenericAPIView):
     Retrieves the n last days of data, where n is defined by the duration parameter, in days
     """
     serializer_class=serializers.StationFlowAlertRecordsSerializer
+    lookup_field = 'id'
+
     @extend_schema(
         # extra parameters added to the schema
         parameters=[

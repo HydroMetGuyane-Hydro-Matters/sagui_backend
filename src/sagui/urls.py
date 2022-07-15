@@ -6,7 +6,7 @@ from . import views
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
-    # path('api/v1/sagui', views.api_root),
+    path('api/v1/', views.api_root),
     path('api/v1/dashboard', views.Dashboard.as_view(), name="dashboard"),
 
     path('api/v1/flow_previ/stations', views.StationsPreviList.as_view(), name="flow-previ-get-stations-list"),
