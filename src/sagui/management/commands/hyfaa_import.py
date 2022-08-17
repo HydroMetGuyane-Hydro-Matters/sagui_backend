@@ -90,7 +90,7 @@ class Command(BaseCommand):
             self.publish_nc(ds)
 
         tac = perf_counter()
-        self.stdout.write(self.style.SUCCESS('Total processing time: {}'.format(tac - tic)))
+        self.stdout.write(self.style.SUCCESS('Total processing time: {} s'.format( round(tac - tic), 2 )))
 
 
     def _extract_data_to_dataframe_at_time(self, nc, ds, t):
@@ -236,7 +236,7 @@ class Command(BaseCommand):
             counter += 1
 
             tac = perf_counter()
-            self.stdout.write("processing time: {}".format(tac - tic))
+            self.stdout.write("processing time: {} s".format( round(tac - tic), 2 ))
 
         last_published_day_jd = max(list(zip(*update_times))[1])
         if not errors:
