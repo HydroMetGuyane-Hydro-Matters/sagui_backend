@@ -391,7 +391,7 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
         rec_levels = [r[0] for r in recs] if recs else []
         levels_count = Counter(rec_levels)
         levels_stats = { k:levels_count[k] for k in flow_alert_levels}
-        global_alert_level ='undefined'
+        global_alert_level = None
         for lev in flow_alert_levels:
             if lev in rec_levels:
                 global_alert_level = lev
@@ -411,7 +411,7 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
             (5, 'r1'),
             (0, 'n'),
         ]
-        alert_code = 'undefined'
+        alert_code = None
 
         try:
             with connection.cursor() as cursor:
@@ -435,7 +435,7 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
         # 4. Atmospheric alert entry
         dash_entries.append({
             "id": "atmo_alerts",
-            "alert_code": "undefined",
+            "alert_code": None,
             "attributes": {}
         })
 
