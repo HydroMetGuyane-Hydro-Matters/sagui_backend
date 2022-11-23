@@ -202,26 +202,6 @@ class RainFall(models.Model):
         return 'Cell_id {} | date {} | rain {}'.format(self.cell_id, self.date, self.rain)
 
 
-class StationsReferenceFlow(models.Model):
-    id = models.AutoField(primary_key=True)
-    day_of_year = models.SmallIntegerField()
-    station_id = models.SmallIntegerField()
-    value = models.SmallIntegerField()
-
-    class Meta:
-        verbose_name = 'Stations reference flow values: values from pre-global warming era'
-        db_table = 'stations_reference_flow'
-        unique_together = (('day_of_year', 'station_id'),)
-        indexes = [
-            models.Index(fields=['-day_of_year']),
-            models.Index(fields=['station_id', 'day_of_year']),
-        ]
-        ordering = ['day_of_year']
-
-    def __str__(self):
-        return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
-
-
 class Stations(geomodels.Model):
     name = models.CharField(max_length=50, null=False)
     river = models.CharField(max_length=50, null=True, blank=True)
@@ -247,6 +227,38 @@ class Stations(geomodels.Model):
 
     def __str__(self):
         return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+
+
+class StationsReferenceFlowPeriod(models.Model):
+    id = models.AutoField(primary_key=True)
+    period = models.CharField(max_length=20, null=False, unique=True, default="2010-2020")
+
+    class Meta:
+        verbose_name = 'Stations reference flow period: period (years) that can be used for the pre-global warming data series'
+        db_table = 'stations_reference_flow_period'
+    def __str__(self):
+        return self.period
+
+
+class StationsReferenceFlow(models.Model):
+    id = models.AutoField(primary_key=True)
+    period = models.ForeignKey(StationsReferenceFlowPeriod, on_delete=models.CASCADE)
+    day_of_year = models.SmallIntegerField()
+    station = models.ForeignKey(Stations, on_delete=models.CASCADE)
+    value = models.SmallIntegerField()
+
+    class Meta:
+        verbose_name = 'Stations reference flow values: values from pre-global warming era'
+        db_table = 'stations_reference_flow'
+        unique_together = (('period', 'day_of_year', 'station_id'),)
+        indexes = [
+            models.Index(fields=['-day_of_year']),
+            models.Index(fields=['station_id', 'day_of_year']),
+        ]
+        ordering = ['day_of_year']
+
+    def __str__(self):
+        return '{} ( station. {} )'.format(self.period, self.station_id)
 
 
 class StationsWithFlowAlerts(geomodels.Model):
