@@ -226,7 +226,9 @@ class Stations(geomodels.Model):
         ordering = ['name']
 
     def __str__(self):
-        return '{} ( riv. {} / {})'.format(self.name, self.river, self.minibasin)
+        # return '#{} {} ( riv. {} / {})'.format(self.id, self.name, self.river, self.minibasin)
+
+        return '#{} {} '.format(self.id, self.name)
 
 
 class StationsReferenceFlowPeriod(models.Model):

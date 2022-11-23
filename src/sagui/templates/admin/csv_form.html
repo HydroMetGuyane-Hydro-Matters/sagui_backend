@@ -1,12 +1,46 @@
 {% extends 'admin/base.html' %}
+{% load static %}
+<!--extends https://github.com/django/django/blob/main/django/contrib/admin/templates/admin/base.html-->
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/csv_form.css' %}">
+{% endblock %}
 
 {% block content %}
     <div>
+        <h1>Importer un fichier CSV (données de référence pré-global warming)</h1>
+        <p>Vous pouvez importer des données pour </p>
+            <ul>
+                <li>plusieurs stations à la fois</li>
+                <li>plusieurs périodes à la fois</li>
+                <li>Et même les deux</li>
+            </ul>
+        <p>La structure attendue est la suivante : </p>
+            <ul>
+                <li>Première colonne s'appelle 'target_period'. Les valeurs doivent correspondre aux entrées définies
+                    dans <a href="/admin/sagui/stationsreferenceflowperiod/" target="_blank" >la liste des périodes de référence</a>. Les entrées ne correspondant pas sont ignorées.</li>
+                <li>2e colonne 'date', au format JJ/MM/YY</li>
+                <li>Les suivantes ont pour nom l'identifiant numérique d'une station
+                    (champ ID dans <a href="/admin/sagui/stations/" target="_blank" >la liste des stations</a>)</li>
+            </ul>
+        <p>Exemple de contenu supporté : </p>
+        <p class="code_block">
+            target_period;date;1;2;3;4;5;6;7;8;9;10;11;12;13 <br />
+            2010-2020;01/01/10;110;226;497;66;75;34;31;122;284;54;5;19;9<br />
+            2010-2020;02/01/10;120;150;382;91;75;44;37;81;205;33;4;9;9<br />
+            2010-2020;03/01/10;150;163;303;102;94;39;54;145;196;34;14;6;18<br />
+            ...
+        </p>
+
         <form action="." method="POST" enctype="multipart/form-data">
             {{ form.as_p }}
             {% csrf_token %}
 
-                <button type="submit">Upload CSV</button>
+            <div class="submit-row">
+                <a href="{% url 'admin:sagui_stationsreferenceflow_changelist' %}" class="btn btn-cancel">Cancel</a>
+                <input type="submit" value="Charger le CSV"/>
+            </div>
         </form>
     </div>
     <br />

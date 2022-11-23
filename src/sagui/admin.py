@@ -53,16 +53,25 @@ class CsvImportForm(forms.Form):
 
 @admin.register(models.StationsReferenceFlow)
 class StationsReferenceFlowAdmin(admin.ModelAdmin):
-    list_display = [ "period", "station_id",]
-    fieldsets = (
-        (None, {
-            'fields': ('period', 'station_id', 'csv_file',),
-        }),
-    )
+    """
+    We tweak this admin class, because we don't want to edit/view single entries,
+    but series aggregated on (period, station)
+    """
+    list_display = [ "period", "station",]
+    list_filter = ("period__period", "station__name")
+
+    # disable the add button
+    def has_add_permission(self, request, obj=None):
+        return False
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
+        # Get only the first of the year, but since we don't show daily specifics,
+        # it looks like the list of priod-ly records
         return qs.filter(day_of_year=1)
 
+    # And we add the support for importing data from a CSV
+    # (same code than for the django admin command)
     change_list_template = "sagui/stations_ref_flow_changelist.html"
 
     def get_urls(self):
