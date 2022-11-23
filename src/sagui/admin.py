@@ -60,8 +60,12 @@ class StationsReferenceFlowAdmin(admin.ModelAdmin):
     list_display = [ "period", "station",]
     list_filter = ("period__period", "station__name")
 
-    # disable the add button
+    # disable the add button & change actions
     def has_add_permission(self, request, obj=None):
+        return False
+    def has_change_permission(self, request, obj=None):
+        return False
+    def has_delete_permission(self, request, obj=None):
         return False
 
     def get_queryset(self, request):
