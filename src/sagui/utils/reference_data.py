@@ -23,7 +23,7 @@ def setup_teardown_temp_tables(cursor: CursorWrapper):
     cursor.execute(
         '''
         DROP TABLE IF EXISTS stations_reference_flow_temp;
-        CREATE  TABLE stations_reference_flow_temp AS SELECT id, period_id, station_id, day_of_year, "value" FROM stations_reference_flow LIMIT 0;
+        CREATE TEMPORARY TABLE stations_reference_flow_temp AS SELECT id, period_id, station_id, day_of_year, "value" FROM stations_reference_flow LIMIT 0;
         '''
     )
     try:
