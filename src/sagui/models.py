@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.gis.db import models as geomodels
+from colorfield.fields import ColorField
 
 # HYFAA Data models -> store them in hyfaa schema ?
 
@@ -318,6 +319,25 @@ class ImportState(models.Model):
 
     def __str__(self):
         return '{}: {} ({} JD), {} errors'.format(self.tablename, self.last_updated, self.last_updated_jd, self.update_errors)
+
+
+class AtmoAlertCategories(models.Model):
+    label = models.CharField(max_length=50, null=False, primary_key=True)
+    bounds_min = models.FloatField('Min bound', default=0, null=False, help_text='Min value')
+    bounds_max = models.FloatField('Max bound', default=0, null=False, help_text='Max value')
+    legend_label = models.CharField(max_length=50, blank=True, null=True, help_text='If provided, replaces min-max for the generation of the legend')
+    alert_label = models.CharField(max_length=50, blank=True, null=True, help_text='Label for the alert')
+    color = ColorField(default='#FFFFFFFF', format="hexa")
+
+    class Meta:
+        verbose_name = 'Categories used for atmospheric data alerts'
+        ordering = ['bounds_min']
+
+    def __str__(self):
+        if self.legend_label:
+            return f'{self.legend_label}: {self.label}'
+        else:
+            return f'{self.bounds_min} - {self.bounds_max}: {self.label}'
 
 
 class SaguiConfig(models.Model):

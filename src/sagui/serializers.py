@@ -2,7 +2,7 @@ from rest_framework import serializers
 import rest_framework_gis.serializers as gis_serializers
 from rest_framework_gis.fields import GeometryField
 
-from .models import Stations, StationsWithFlowAlerts, StationsWithFlowPrevi
+from .models import Stations, StationsWithFlowAlerts, StationsWithFlowPrevi, AtmoAlertCategories
 #
 # class StationsWithFlowAlertsNonGeoSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -84,3 +84,17 @@ class DashboardEntrySerializer(serializers.Serializer):
     id = serializers.CharField()
     alert_code = serializers.CharField()
     attributes = serializers.JSONField()
+
+
+class AtmoAlertsFilesSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    description = serializers.CharField()
+    extent = serializers.JSONField()
+    results = serializers.JSONField()
+
+
+class AtmoAlertCategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AtmoAlertCategories
+        # fields = '__all__'
+        fields = ('label', 'bounds_min', 'bounds_max', 'legend_label', 'alert_label', 'color')

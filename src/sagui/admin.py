@@ -51,6 +51,11 @@ class CsvImportForm(forms.Form):
     csv_file = forms.FileField()
 
 
+@admin.register(models.AtmoAlertCategories)
+class AtmoAlertCategoriesAdmin(admin.ModelAdmin):
+    pass
+
+
 @admin.register(models.StationsReferenceFlow)
 class StationsReferenceFlowAdmin(admin.ModelAdmin):
     """
