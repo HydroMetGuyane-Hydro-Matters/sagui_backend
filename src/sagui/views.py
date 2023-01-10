@@ -2,7 +2,10 @@ from collections import Counter
 import csv
 from datetime import date, timedelta, datetime
 import logging
+import os
+import re
 import statistics
+from glob import glob
 
 from django.core import serializers
 from django.db import connection
@@ -17,6 +20,7 @@ from rest_framework_csv.renderers import CSVRenderer
 from rest_framework.views import APIView
 from django.contrib.gis.geos import Point
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from django.conf import settings
 
 from sagui import serializers, models
 from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts, SaguiConfig
@@ -29,7 +33,9 @@ def api_root(request, format=None):
         'dashboard': reverse('dashboard', request=request, format=format),
         'flow-previ-stations-list': reverse('flow-previ-get-stations-list', request=request, format=format),
         'flow-alerts-stations-list': reverse('flow-alerts-get-stations-list', request=request, format=format),
-        'swagger-ui': reverse('swagger-ui', request=request, format=format),
+        'atmo-get-classes': reverse('atmo-get-classes', request=request, format=format),
+        'atmo-get-files-list': reverse('atmo-get-files-list', request=request, format=format),
+       'swagger-ui': reverse('swagger-ui', request=request, format=format),
         'openapi-schema': reverse('openapi-schema', request=request, format=format),
     })
 
@@ -193,17 +199,27 @@ class StationsPreviRecordsById(generics.GenericAPIView):
         end_date = forecast_records.last().date
         dates_list = [start_date + timedelta(days=n+1) for n in range(int((end_date - start_date).days))]
         doy_list = [d.strftime('%j') for d in dates_list]
+        reference_periods = models.StationsReferenceFlowPeriod.objects.all().order_by('-period')
         reference_records = models.StationsReferenceFlow.objects.filter(station_id__exact=id,
                                                      day_of_year__in=doy_list,
                                                      ).order_by('day_of_year')
         reference_records_as_dict = {
-            str(r.day_of_year): r.value for r in reference_records
+            f'{r.day_of_year}': r.flow for r in reference_records
         }
         reference_data = [{
             "source": '2010-2020',
             "date": d.strftime("%Y-%m-%d"),
             "flow": round(reference_records_as_dict[d.strftime('%j').lstrip("0")]),
         } for d in dates_list]
+        reference_records_as_dict = {
+            f'{r.period}/{r.day_of_year}': r.flow for r in reference_records
+        }
+        # reference_data = [{
+        #     "period": p.period,
+        #     'data'
+        #     "date": d.strftime("%Y-%m-%d"),
+        #     "flow": round(reference_records_as_dict[d.strftime('%j').lstrip("0")]),
+        # } for p in reference_periods]
 
         # 5. Generate the output structure and send it
         # Handle special case where format is CSV (serializer cannot automatically generate a usable CSV here)
@@ -220,13 +236,23 @@ class StationsPreviRecordsById(generics.GenericAPIView):
             'data': {
                 'flow': mgb_or_assim_data,
                 'forecast': forecast_data,
-                'references': [{
-                    'id': '2010-2020',
-                    'data': reference_data
-                },
+                'references': [
+                #     {
+                #     'id': '2010-2020',
+                #     'data': reference_data
+                # },
                 ],
             },
         }
+        for p in reference_periods:
+            station_record['data']['references'].append({
+                'id': p.period,
+                'data': [{
+                    "source": p.period,
+                    "date": d.strftime("%Y-%m-%d"),
+                    "flow": round(reference_records_as_dict[f"{p.period}/{d.strftime('%j').lstrip('0')}"]),
+                } for d in dates_list]
+            })
         serializer = serializers.StationFlowPreviRecordsSerializer(station_record, many=False)
         return Response(serializer.data)
 
@@ -441,3 +467,65 @@ AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC L
 
         serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)
         return Response(serializer.data)
+
+
+class AtmoAlertCategoriesList(generics.ListAPIView):
+    """
+    Get the atmo categories data with info necessary to render the pngs and generate a legend.
+    """
+    serializer_class = serializers.AtmoAlertCategoriesSerializer
+    queryset = models.AtmoAlertCategories.objects.all()
+    renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES) + (CSVRenderer,)
+    pagination_class = None
+
+
+class AtmoAlertsFilesList(generics.GenericAPIView):
+    """
+    Get list and path to Atmospheric aerosol index alerts files:
+    retrieve the 10 last days of atmo data
+    """
+    serializer_class = serializers.AtmoAlertsFilesSerializer
+    # renderer_classes = tuple(api_settings.DEFAULT_RENDERER_CLASSES) + (CSVRenderer,)
+
+    @extend_schema(
+        # extra parameters added to the schema
+        parameters=[
+            OpenApiParameter(name='duration', description='Duration time to extract, in days', required=False,
+                             type=int, default=10),
+        ],
+    )
+
+    # hack to get browsable_api working
+    def get_queryset(self):
+        return {}
+
+    def get(self, request, format=None):
+        nb_days_backward = request.query_params.get('duration', 10)
+        nb_days_backward = int(nb_days_backward)
+
+        files_path = settings.SAGUI_SETTINGS.get('SAGUI_PATH_TO_ATMO_FILES', '')
+        files_list = sorted(glob(f'{files_path}/*_aai.png'), reverse=True)[:10]
+
+        results = {
+            'count': '5',
+            'description': 'map of atmospheric alerts based on Sentinel5P absorbing aerosol index data',
+            'extent': {
+                'east': -57,
+                'south': 1,
+                'west': -50,
+                'north': 7,
+            },
+            'results': []
+        }
+        for f in files_list:
+            d = datetime.strptime(re.search(r"[0-9]{8}", os.path.basename(f))[0], '%Y%m%d').strftime("%Y-%m-%d")
+            results['results'].append({
+                'date': d,
+                'png': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.basename(f)}",
+                'wld': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld",
+                'geotiff': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif",
+            })
+
+        serializer = serializers.AtmoAlertsFilesSerializer(results, many=False)
+        return Response(serializer.data)
+
