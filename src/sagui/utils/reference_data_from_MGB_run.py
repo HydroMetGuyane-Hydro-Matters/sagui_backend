@@ -61,6 +61,9 @@ if apply_conversion_factor:
         # row[1]['conv'] = apply_conv_factor(conv_factors, str(mini), row[1]['flow'])
         row[1]['flow'] = apply_conv_factor(conv_factors, str(mini), row[1]['flow'])
 
+    # [hack] Since Adrien's algorithm might generate some negative values, for now, we will "clip" them to 0
+    dff.clip(lower=0, inplace=True)
+
 df2 = dff.round(1)
 
 # Reshape the table
