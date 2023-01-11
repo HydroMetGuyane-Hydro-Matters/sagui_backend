@@ -15,7 +15,7 @@ urlpatterns = [
     path('api/v1/flow_alerts/stations', views.StationsAlertList.as_view(), name="flow-alerts-get-stations-list"),
     path('api/v1/flow_alerts/stations/<int:id>/data', views.StationFlowRecordsById.as_view(), name="flow-alert-get-stationrecords-by-id"),
 
-    path('api/v1/atmo/files', views.AtmoAlertsFilesList.as_view(), name="atmo-get-files-list"),
+    path('api/v1/atmo/files', views.AtmoAlertsFilesList.as_view(), name="atmo-alerts-rasters"),
     path('api/v1/atmo/classes', views.AtmoAlertCategoriesList.as_view(), name="atmo-get-classes"),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='openapi-schema'),

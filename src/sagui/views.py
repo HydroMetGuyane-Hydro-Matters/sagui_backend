@@ -33,8 +33,8 @@ def api_root(request, format=None):
         'dashboard': reverse('dashboard', request=request, format=format),
         'flow-previ-stations-list': reverse('flow-previ-get-stations-list', request=request, format=format),
         'flow-alerts-stations-list': reverse('flow-alerts-get-stations-list', request=request, format=format),
-        'atmo-get-classes': reverse('atmo-get-classes', request=request, format=format),
-        'atmo-get-files-list': reverse('atmo-get-files-list', request=request, format=format),
+        # 'atmo-get-classes': reverse('atmo-get-classes', request=request, format=format),
+        'atmo-alerts-rasters': reverse('atmo-alerts-rasters', request=request, format=format),
        'swagger-ui': reverse('swagger-ui', request=request, format=format),
         'openapi-schema': reverse('openapi-schema', request=request, format=format),
     })
@@ -515,15 +515,17 @@ class AtmoAlertsFilesList(generics.GenericAPIView):
                 'west': -50,
                 'north': 7,
             },
-            'results': []
+            'classes': reverse('atmo-get-classes', request=request, format=format),
+            'legend': "/atmo/styled/legend.png",
+            'results': [],
         }
         for f in files_list:
             d = datetime.strptime(re.search(r"[0-9]{8}", os.path.basename(f))[0], '%Y%m%d').strftime("%Y-%m-%d")
             results['results'].append({
                 'date': d,
-                'png': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.basename(f)}",
-                'wld': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld",
-                'geotiff': f"{settings.SAGUI_SETTINGS.get('STATIC_URL', '')}/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif",
+                'png': "/atmo/styled/{os.path.basename(f)}",
+                'wld': "/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld",
+                'geotiff': "/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif",
             })
 
         serializer = serializers.AtmoAlertsFilesSerializer(results, many=False)

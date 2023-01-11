@@ -89,6 +89,8 @@ class DashboardEntrySerializer(serializers.Serializer):
 class AtmoAlertsFilesSerializer(serializers.Serializer):
     count = serializers.IntegerField()
     description = serializers.CharField()
+    classes = serializers.CharField()
+    legend = serializers.CharField()
     extent = serializers.JSONField()
     results = serializers.JSONField()
 
