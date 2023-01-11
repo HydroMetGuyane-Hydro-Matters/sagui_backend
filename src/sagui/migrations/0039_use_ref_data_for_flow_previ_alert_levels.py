@@ -54,8 +54,9 @@ BEGIN
             ''source'', source,
             ''level'', level_ref
         ) ORDER BY "date" DESC) AS levels, geom
-        FROM stations
+        FROM stations_with_refperiod
         GROUP BY id, name, river, minibasin_id, geom';
+	RETURN QUERY EXECUTE format(query1, dataset_tbl_name, dataset_tbl_name);
 END
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION guyane.func_stations_with_flow_previ() IS 
