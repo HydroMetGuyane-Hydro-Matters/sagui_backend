@@ -10,17 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='stationsreferenceflow',
-            name='stations_re_station_22f930_idx',
-        ),
-        migrations.RenameField(
-            model_name='stationsreferenceflow',
-            old_name='station_id',
-            new_name='station',
-        ),
-        migrations.AddIndex(
-            model_name='stationsreferenceflow',
-            index=models.Index(fields=['station_id', 'day_of_year'], name='stations_re_station_81db50_idx'),
-        ),
     ]

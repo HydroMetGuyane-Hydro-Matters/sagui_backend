@@ -15,17 +15,45 @@ class Migration(migrations.Migration):
             name='StationsReferenceFlowPeriod',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('period', models.CharField(default='2010-2020', max_length=20, null=False, unique=True)),
+                ('period', models.CharField(default='2010', max_length=20, null=False, unique=True)),
             ],
             options={
                 'verbose_name': 'Stations reference flow period: period (years) that can be used for the pre-global warming data series',
                 'db_table': 'stations_reference_flow_period',
             },
         ),
-        migrations.AlterField(
+        migrations.RunSQL(
+            """
+            DROP table guyane.stations_reference_flow;
+            DELETE FROM guyane.auth_permission WHERE codename LIKE '%_stationsreferenceflow';
+            DELETE FROM guyane.django_content_type WHERE model='stationsreferenceflow';
+            """
+        ),
+        migrations.CreateModel(
+            name='StationsReferenceFlow',
+            fields=[
+                ('id', models.AutoField(primary_key=True, serialize=False)),
+                ('period', models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='sagui.stationsreferenceflowperiod')),
+                ('day_of_year', models.SmallIntegerField()),
+                ('station', models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='sagui.stations')),
+                ('value', models.SmallIntegerField()),
+            ],
+            options={
+                'verbose_name': 'Stations reference flow values: values from pre-global warming era',
+                'db_table': 'stations_reference_flow',
+                'ordering': ['day_of_year'],
+            },
+        ),
+        migrations.AddIndex(
             model_name='stationsreferenceflow',
-            name='period',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='sagui.stationsreferenceflowperiod'),
-            preserve_default=False,
+            index=models.Index(fields=['-day_of_year'], name='stations_re_day_of__01573e_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='stationsreferenceflow',
+            index=models.Index(fields=['station_id', 'day_of_year'], name='stations_re_station_81db50_idx'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='stationsreferenceflow',
+            unique_together={('period', 'day_of_year', 'station')},
         ),
     ]

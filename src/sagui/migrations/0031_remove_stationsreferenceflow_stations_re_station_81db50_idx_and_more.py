@@ -11,22 +11,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='stationsreferenceflow',
-            name='stations_re_station_81db50_idx',
-        ),
-        migrations.AddField(
-            model_name='stationsreferenceflow',
-            name='period',
-            field=models.CharField(default='2010-2020', max_length=20, null=True),
-        ),
-        migrations.AlterField(
-            model_name='stationsreferenceflow',
-            name='station_id',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='sagui.stations'),
-        ),
-        migrations.AddIndex(
-            model_name='stationsreferenceflow',
-            index=models.Index(fields=['station_id', 'day_of_year'], name='stations_re_station_22f930_idx'),
-        ),
     ]

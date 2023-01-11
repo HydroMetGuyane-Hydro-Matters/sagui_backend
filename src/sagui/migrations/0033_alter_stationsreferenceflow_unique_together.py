@@ -10,8 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(
-            name='stationsreferenceflow',
-            unique_together={('period', 'day_of_year', 'station_id')},
-        ),
     ]
