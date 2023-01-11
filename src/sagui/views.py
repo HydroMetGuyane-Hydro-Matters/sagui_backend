@@ -10,6 +10,8 @@ from glob import glob
 from django.core import serializers
 from django.db import connection
 from django.http import HttpResponse
+from django.templatetags.static import static
+from django.contrib.staticfiles.storage import staticfiles_storage
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -516,16 +518,16 @@ class AtmoAlertsFilesList(generics.GenericAPIView):
                 'north': 7,
             },
             'classes': reverse('atmo-get-classes', request=request, format=format),
-            'legend': "/atmo/styled/legend.png",
+            'legend': self.request.build_absolute_uri(staticfiles_storage.url('/atmo/styled/legend.png')),
             'results': [],
         }
         for f in files_list:
             d = datetime.strptime(re.search(r"[0-9]{8}", os.path.basename(f))[0], '%Y%m%d').strftime("%Y-%m-%d")
             results['results'].append({
                 'date': d,
-                'png': "/atmo/styled/{os.path.basename(f)}",
-                'wld': "/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld",
-                'geotiff': "/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif",
+                'png': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.basename(f)}')),
+                'wld': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld')),
+                'geotiff': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif')),
             })
 
         serializer = serializers.AtmoAlertsFilesSerializer(results, many=False)
