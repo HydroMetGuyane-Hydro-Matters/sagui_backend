@@ -39,6 +39,9 @@ DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS').split(',')
 print('allowed hosts:{}'.format(ALLOWED_HOSTS))
 
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS').split(',')
+print('csrf allowed hosts:{}'.format(CSRF_TRUSTED_ORIGINS))
+
 
 # Application definition
 
