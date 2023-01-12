@@ -20,7 +20,6 @@ from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework_csv.renderers import CSVRenderer
 from rest_framework.views import APIView
-from django.contrib.gis.geos import Point
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from django.conf import settings
 
@@ -376,19 +375,41 @@ class Dashboard(APIView):
         anomaly = None
         try:
             # Try to fetch the name of the table for source data from the saguiconfig table
-            tablename = 'hyfaa_data_assimilated'
+            tablename = 'hyfaa_forecast_with_assimilated'
             config = SaguiConfig.objects.first()
             if config:
-                tablename = 'hyfaa_data_' + config.use_dataset
+                tablename = 'hyfaa_forecast_with_' + config.use_dataset
 
             with connection.cursor() as cursor:
                 query = '''
-SELECT  ROUND(AVG(flow_anomaly)), guyane.anomaly_to_alert_level(AVG(flow_anomaly)) AS code_avg, 
-        ROUND(MIN(flow_anomaly)), guyane.anomaly_to_alert_level(MIN(flow_anomaly)) AS code_min, 
-        ROUND(MAX(flow_anomaly)), guyane.anomaly_to_alert_level(MAX(flow_anomaly)) AS code_max
-FROM guyane.{tbl} a, guyane.hyfaa_stations s 
-WHERE a.cell_id = s.minibasin_id 
-AND a."date" IN (SELECT DISTINCT "date" FROM guyane.{tbl} ORDER BY "date" DESC LIMIT 1);
+WITH most_recent_date AS (
+    SELECT DISTINCT "date" AS d FROM guyane.hyfaa_data_assimilated ORDER BY "date" DESC LIMIT 1
+) ,
+flows AS (
+    SELECT cell_id, flow, "date" FROM guyane.{tbl}
+    WHERE "date" IN (SELECT d FROM most_recent_date)
+       AND cell_id IN (SELECT DISTINCT minibasin_id FROM guyane.hyfaa_stations)
+),
+stations_flows AS (
+    SELECT s.id AS station_id, f.flow, f."date"
+        FROM flows f, guyane.hyfaa_stations s
+        WHERE f.cell_id = s.minibasin_id
+),
+ref_flow_latest AS (
+    SELECT * FROM guyane.stations_reference_flow WHERE period_id IN (SELECT id FROM guyane.stations_reference_flow_period ORDER BY period DESC LIMIT 1)
+AND day_of_year IN (select DATE_PART('doy', max(d)) FROM most_recent_date)
+),
+anomalies AS (
+    SELECT *,
+           guyane.compute_anomaly(f.flow, r.flow) AS flow_anomaly,
+           guyane.anomaly_to_alert_level(guyane.compute_anomaly(f.flow, r.flow)) AS alert_level
+     FROM ref_flow_latest r, stations_flows f
+         WHERE r.station_id = f.station_id
+)
+SELECT  ROUND(AVG(flow_anomaly)) AS val_avg, guyane.anomaly_to_alert_level(AVG(flow_anomaly)) AS code_avg,
+    ROUND(MIN(flow_anomaly)) AS val_min, guyane.anomaly_to_alert_level(MIN(flow_anomaly)) AS code_min,
+    ROUND(MAX(flow_anomaly)) AS val_max, guyane.anomaly_to_alert_level(MAX(flow_anomaly)) AS code_max
+FROM anomalies
                 '''.format(tbl=tablename)
                 cursor.execute(query)
                 rec = cursor.fetchone()
