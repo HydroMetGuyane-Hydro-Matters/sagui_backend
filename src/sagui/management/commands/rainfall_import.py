@@ -16,7 +16,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db import connection, transaction
 
-from sagui import utils
+from sagui.utils import hyfaa as hyfaautils
 from sagui.models import ImportState, RainFall
 
 import re
@@ -126,10 +126,10 @@ class Command(BaseCommand):
         last_updated_without_errors = last_update_date if not errors else self.last_updated_without_errors
         tbl_state = ImportState.objects.update_or_create(tablename=self.tablename, defaults={
             "last_updated": last_update_date,
-            "last_updated_jd": utils.datetime_to_julianday(last_update_date),
+            "last_updated_jd": hyfaautils.datetime_to_julianday(last_update_date),
             "update_errors": errors,
             "last_updated_without_errors": last_updated_without_errors,
-            "last_updated_without_errors_jd": utils.datetime_to_julianday(last_updated_without_errors),
+            "last_updated_without_errors_jd": hyfaautils.datetime_to_julianday(last_updated_without_errors),
         })
 
         tac = perf_counter()

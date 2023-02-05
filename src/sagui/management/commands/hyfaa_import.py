@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db import connection
 
-from sagui import utils
+from sagui.utils import hyfaa as hyfaautils
 from sagui import models
 
 
@@ -109,8 +109,8 @@ class Command(BaseCommand):
         # Common columns
         columns_dict = {
             'cell_id': np.arange(start=1, stop=nb_cells + 1, dtype='i2'),
-            'date': utils.vfunc_jd_to_dt(np.full((nb_cells), nc.variables['time'][itime])),
-            'update_time': utils.vfunc_jd_to_dt(np.full((nb_cells), nc.variables['time_added_to_hydb'][itime])),
+            'date': hyfaautils.vfunc_jd_to_dt(np.full((nb_cells), nc.variables['time'][itime])),
+            'update_time': hyfaautils.vfunc_jd_to_dt(np.full((nb_cells), nc.variables['time_added_to_hydb'][itime])),
             'is_analysis': np.full((nb_cells), nc.variables['is_analysis'][itime], dtype='?')
         }
         # dynamic columns: depend on the dataserie considered
@@ -223,7 +223,7 @@ class Command(BaseCommand):
                 e = self._publish_dataframe_to_db(concatenated_df, ds)
                 if not e:
                     self.stdout.write("Published data for time {} (index {}, greg. time {})".format(t[1], t[0],
-                                                                                               utils.julianday_to_datetime(
+                                                                                               hyfaautils.julianday_to_datetime(
                                                                                                    t[1])))
                 else:
                     self.stdout.write(self.style.ERROR(
@@ -245,10 +245,10 @@ class Command(BaseCommand):
         # update state table
         # _update_state(ds, errors, last_published_day_jd, last_updated_without_errors_jd)
         tbl_state = models.ImportState.objects.update_or_create(tablename=ds['tablename'], defaults={
-            "last_updated": utils.julianday_to_datetime(last_published_day_jd),
+            "last_updated": hyfaautils.julianday_to_datetime(last_published_day_jd),
             "last_updated_jd": last_published_day_jd,
             "update_errors": errors,
-            "last_updated_without_errors": utils.julianday_to_datetime(last_updated_without_errors_jd),
+            "last_updated_without_errors": hyfaautils.julianday_to_datetime(last_updated_without_errors_jd),
             "last_updated_without_errors_jd": last_updated_without_errors_jd,
         })
         # tbl_state.save() # should not be necessary
