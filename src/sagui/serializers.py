@@ -83,6 +83,7 @@ class StationFlowAlertRecordsSerializer(serializers.Serializer):
 class DashboardEntrySerializer(serializers.Serializer):
     id = serializers.CharField()
     alert_code = serializers.CharField()
+    description = serializers.CharField()
     attributes = serializers.JSONField()
 
 

@@ -25,6 +25,7 @@ from django.conf import settings
 
 from sagui import serializers, models
 from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts, SaguiConfig
+from sagui.utils import atmo
 
 logger = logging.getLogger(__name__)
 
@@ -423,6 +424,7 @@ FROM anomalies
             dash_entries.append({
                 "id": "flow_previ",
                 "alert_code": global_alert_level,
+                "description": "Alert level based on the anomaly relative to the 'pre-global warming' historical reference data from last decade. It is computed only on the location of the stations, where we have such data",
                 "attributes": {
                     "anomaly_avg": rec[0],
                     "anomaly_min": rec[2],
@@ -449,6 +451,7 @@ FROM anomalies
         dash_entries.append({
             "id": "flow_alerts",
             "alert_code": global_alert_level,
+            "description": "Flow alert level, computed over the stations locations",
             "attributes": levels_stats
         })
 
@@ -478,14 +481,31 @@ FROM anomalies
         dash_entries.append({
             "id": "rain_alerts",
             "alert_code": alert_code,
+            "description": "Rain level alert code (<5mm = normal, <20mm = low, <50mm = medium, above = high)",
             "attributes": {}
         })
 
         # 4. Atmospheric alert entry
+        raw_atom_files_path = f"{settings.SAGUI_SETTINGS.get('SAGUI_PATH_TO_ATMO_FILES', '')}/../raw"
+        last_raw_atom_file = sorted(glob(f'{raw_atom_files_path}/*.tif'))[-1]
+        zoi_path =f"{settings.SAGUI_SETTINGS.get('SAGUI_DATA_PATH', '')}/zoi.geojson"
+        atmo_stats = atmo.stats(last_raw_atom_file, zoi_path)
+        alert_categories = models.AtmoAlertCategories.objects.all().order_by('-bounds_min')
+        alert_value = atmo_stats['10th_max']['value']
+        alert_code = None
+        # We cannot use idx in the loop for some reason, so doing it manually
+        idx = len(alert_categories)-1
+        for c in alert_categories:
+            if alert_value > c.bounds_min:
+                alert_code = idx
+                break
+            # decrease index
+            idx = idx - 1
         dash_entries.append({
             "id": "atmo_alerts",
-            "alert_code": None,
-            "attributes": {}
+            "alert_code": alert_code,
+            "description": "Alert code is expected to range between 0 (no alert) and 5 (extremely bad), based on the classes defined by /api/v1/atmo/classes. At the moment, it is using the '10th_max' value",
+            "attributes": atmo_stats,
         })
 
         serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)

@@ -177,6 +177,7 @@ SAGUI_SETTINGS = {
     'RECORD_DECIMALS': 2,
     'SAGUI_COORDINATES_ROUND_DECIMALS': 5,
     'SAGUI_PATH_TO_ATMO_FILES': env('SAGUI_PATH_TO_ATMO_FILES', default='/home/jean/dev/HM/sagui_platform/atmo_s5p/data/styled/'),
+    'SAGUI_DATA_PATH': env('SAGUI_DATA_PATH', default='/home/jean/dev/HM/sagui_platform/sagui_backend/data/'),
     'DRAINAGE_VT_URL': env('DRAINAGE_VT_URL', default=''),
     'RAINFALL_NETCDF_FILES_PATH': env('RAINFALL_NETCDF_FILES_PATH', default=None),
     'HYFAA_IMPORT_NETCDF_ROOT_PATH': env('HYFAA_IMPORT_NETCDF_ROOT_PATH', default=None),
