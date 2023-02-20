@@ -503,7 +503,7 @@ FROM anomalies
             idx = idx - 1
         dash_entries.append({
             "id": "atmo_alerts",
-            "alert_code": alert_code,
+            "alert_code": f'a{alert_code}',
             "description": "Alert code is expected to range between 0 (no alert) and 5 (extremely bad), based on the classes defined by /api/v1/atmo/classes. At the moment, it is using the '10th_max' value",
             "attributes": atmo_stats,
         })
