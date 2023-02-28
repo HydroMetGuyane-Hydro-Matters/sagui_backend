@@ -323,6 +323,9 @@ class ImportState(models.Model):
 
 class AtmoAlertCategories(models.Model):
     label = models.CharField(max_length=50, null=False, primary_key=True)
+    label_fr = models.CharField(max_length=50, null=True, blank=True)
+    label_en = models.CharField(max_length=50, null=True, blank=True)
+    label_pt = models.CharField(max_length=50, null=True, blank=True)
     bounds_min = models.FloatField('Min bound', default=0, null=False, help_text='Min value')
     bounds_max = models.FloatField('Max bound', default=0, null=False, help_text='Max value')
     legend_label = models.CharField(max_length=50, blank=True, null=True, help_text='If provided, replaces min-max for the generation of the legend')
