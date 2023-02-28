@@ -235,6 +235,7 @@ class StationsPreviRecordsById(generics.GenericAPIView):
             'minibasin': station.minibasin_id,
             'city': station.name,
             'river': station.river,
+            'unit': 'm³/sec',
             'data': {
                 'flow': mgb_or_assim_data,
                 'forecast': forecast_data,
@@ -347,6 +348,7 @@ class StationFlowRecordsById(generics.GenericAPIView):
             'minibasin': station.minibasin_id,
             'city': station.name,
             'river': station.river,
+            'unit': 'm³/sec',
             'data': {
                 'flow': mgb_or_assim_data,
                 'forecast': forecast_data,

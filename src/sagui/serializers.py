@@ -64,6 +64,8 @@ class StationFlowPreviRecordsSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     minibasin = serializers.IntegerField()
     city = serializers.CharField()
+    river = serializers.CharField()
+    unit = serializers.CharField()
     data = StationFlowPreviDataSerializer()
 
 
@@ -76,6 +78,8 @@ class StationFlowAlertRecordsSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     minibasin = serializers.IntegerField()
     city = serializers.CharField()
+    river = serializers.CharField()
+    unit = serializers.CharField()
     data = StationFlowAlertDataSerializer()
     thresholds = ThresholdSerializer(many=True)
 
