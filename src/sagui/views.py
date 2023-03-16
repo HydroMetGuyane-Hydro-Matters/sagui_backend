@@ -4,13 +4,10 @@ from datetime import date, timedelta, datetime
 import logging
 import os
 import re
-import statistics
 from glob import glob
 
 from django.core import serializers
-from django.db import connection
 from django.http import HttpResponse
-from django.templatetags.static import static
 from django.contrib.staticfiles.storage import staticfiles_storage
 from rest_framework import generics, status
 from rest_framework.pagination import PageNumberPagination
@@ -20,14 +17,17 @@ from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework_csv.renderers import CSVRenderer
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.conf import settings
+from django.shortcuts import render
 
 from sagui import serializers, models
-from sagui.models import Stations, DataMgbStandard, DataAssimilated, DataForecast, StationsWithFlowAlerts, SaguiConfig
-from sagui.utils import atmo
+from sagui.utils import atmo, rain, \
+    stations_forecast as stations_forecast_utils, \
+    stations_alert as stations_alert_utils
 
 logger = logging.getLogger(__name__)
+
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -70,7 +70,7 @@ def _get_minibasin_id_from_station_id(id):
     :param id: station's id
     :return: cell (minibasin) id
     """
-    station = Stations.objects.filter(id__exact=id)
+    station = models.Stations.objects.filter(id__exact=id)
     if not station:
         return None
     station = station.first()
@@ -374,140 +374,45 @@ class Dashboard(APIView):
     def get(self, request, format=None):
         dash_entries = []
         # 1. flow_previ entry
-        # Get anomaly stats and codes over the stations
-        anomaly = None
-        try:
-            # Try to fetch the name of the table for source data from the saguiconfig table
-            tablename = 'hyfaa_forecast_with_assimilated'
-            config = SaguiConfig.objects.first()
-            if config:
-                tablename = 'hyfaa_forecast_with_' + config.use_dataset
-
-            with connection.cursor() as cursor:
-                query = '''
-WITH most_recent_date AS (
-    SELECT DISTINCT "date" AS d FROM guyane.hyfaa_data_assimilated ORDER BY "date" DESC LIMIT 1
-) ,
-flows AS (
-    SELECT cell_id, flow, "date" FROM guyane.{tbl}
-    WHERE "date" IN (SELECT d FROM most_recent_date)
-       AND cell_id IN (SELECT DISTINCT minibasin_id FROM guyane.hyfaa_stations)
-),
-stations_flows AS (
-    SELECT s.id AS station_id, f.flow, f."date"
-        FROM flows f, guyane.hyfaa_stations s
-        WHERE f.cell_id = s.minibasin_id
-),
-ref_flow_latest AS (
-    SELECT * FROM guyane.stations_reference_flow WHERE period_id IN (SELECT id FROM guyane.stations_reference_flow_period ORDER BY period DESC LIMIT 1)
-AND day_of_year IN (select DATE_PART('doy', max(d)) FROM most_recent_date)
-),
-anomalies AS (
-    SELECT *,
-           guyane.compute_anomaly(f.flow, r.flow) AS flow_anomaly,
-           guyane.anomaly_to_alert_level(guyane.compute_anomaly(f.flow, r.flow)) AS alert_level
-     FROM ref_flow_latest r, stations_flows f
-         WHERE r.station_id = f.station_id
-)
-SELECT  ROUND(AVG(flow_anomaly)) AS val_avg, guyane.anomaly_to_alert_level(AVG(flow_anomaly)) AS code_avg,
-    ROUND(MIN(flow_anomaly)) AS val_min, guyane.anomaly_to_alert_level(MIN(flow_anomaly)) AS code_min,
-    ROUND(MAX(flow_anomaly)) AS val_max, guyane.anomaly_to_alert_level(MAX(flow_anomaly)) AS code_max
-FROM anomalies
-                '''.format(tbl=tablename)
-                cursor.execute(query)
-                rec = cursor.fetchone()
-        except Exception as error:
-            logger.error("Exception while fetching Dashboard data:", error)
-            logger.error("Exception TYPE:", type(error))
-
-        if rec:
-            # get the code for the anomaly with highest asbsolute value
-            global_alert_level = rec[1]
-            dash_entries.append({
-                "id": "flow_previ",
-                "alert_code": global_alert_level,
-                "description": "Alert level based on the anomaly relative to the 'pre-global warming' historical reference data from last decade. It is computed only on the location of the stations, where we have such data",
-                "attributes": {
-                    "anomaly_avg": rec[0],
-                    "anomaly_min": rec[2],
-                    "anomaly_max": rec[4],
-                }
-            })
+        # Get anomaly stats and alert codes over the stations
+        rec = stations_forecast_utils.get_global_alert_info()
+        dash_entries.append({
+            "id": "flow_previ",
+            "alert_code": rec['global_alert_level'],
+            "histogram": rec['histogram'],
+            "description": "Alert level based on the anomaly relative to the 'pre-global warming' historical reference data from last decade. It is computed only on the location of the stations, where we have such data",
+            "attributes": rec['stats'],
+        })
 
         # 2. flow_alerts entry
-        # flow_alert_levels = ['f3', 'f2', 'f1', 'd3', 'd2', 'd1', 'n']
-        flow_alert_levels = ['f3', 'f2', 'f1', 'd2', 'n']
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT levels->0->>\'level\' AS l FROM guyane.stations_with_flow_alerts')
-            recs = cursor.fetchall()
-
-        rec_levels = [r[0] for r in recs] if recs else []
-        levels_count = Counter(rec_levels)
-        levels_stats = { k:levels_count[k] for k in flow_alert_levels}
-        global_alert_level = None
-        for lev in flow_alert_levels:
-            if lev in rec_levels:
-                global_alert_level = lev
-                break
-
+        rec = stations_alert_utils.get_global_alert_info()
         dash_entries.append({
             "id": "flow_alerts",
-            "alert_code": global_alert_level,
+            "alert_code": rec['global_alert_level'],
             "description": "Flow alert level, computed over the stations locations",
-            "attributes": levels_stats
+            "histogram": rec['histogram'],
+            "attributes": {},
         })
 
         # 3. Rain alert entry
         # we will use thresholds 5, 20 and 50mm
-        alert_levels = [
-            (50, 'r3'),
-            (20, 'r2'),
-            (5, 'r1'),
-            (0, 'n'),
-        ]
-        alert_code = None
-
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute('SELECT ROUND(avg((values->0->>\'rain\')::numeric),1) AS l FROM guyane.rainfall_minibasin_aggregated_geo')
-                rec = cursor.fetchone()
-                mean_rain = rec[0] if rec else None
-                for lev in alert_levels:
-                    if mean_rain >= lev[0]:
-                        alert_code = lev[1]
-                        break
-        except Exception as error:
-            logger.error("Exception while fetching Dashboard data:", error)
-            logger.error("Exception TYPE:", type(error))
-
+        rec = rain.get_global_alert_info()
         dash_entries.append({
             "id": "rain_alerts",
-            "alert_code": alert_code,
+            "alert_code": rec['global_alert_level'],
+            "histogram": rec['histogram'],
             "description": "Rain level alert code (<5mm = normal, <20mm = low, <50mm = medium, above = high)",
-            "attributes": {}
+            "attributes": {},
         })
 
         # 4. Atmospheric alert entry
-        raw_atom_files_path = f"{settings.SAGUI_SETTINGS.get('SAGUI_PATH_TO_ATMO_FILES', '')}/../raw"
-        last_raw_atom_file = sorted(glob(f'{raw_atom_files_path}/*.tif'))[-1]
-        zoi_path =f"{settings.SAGUI_SETTINGS.get('SAGUI_DATA_PATH', '')}/zoi.geojson"
-        atmo_stats = atmo.stats(last_raw_atom_file, zoi_path)
-        alert_categories = models.AtmoAlertCategories.objects.all().order_by('-bounds_min')
-        alert_value = atmo_stats['10th_max']['value']
-        alert_code = None
-        # We cannot use idx in the loop for some reason, so doing it manually
-        idx = len(alert_categories)-1
-        for c in alert_categories:
-            if alert_value > c.bounds_min:
-                alert_code = idx
-                break
-            # decrease index
-            idx = idx - 1
+        rec = atmo.get_global_alert_info()
         dash_entries.append({
             "id": "atmo_alerts",
-            "alert_code": f'a{alert_code}',
+            "alert_code": rec['global_alert_level'],
+            "histogram": rec['histogram'],
             "description": "Alert code is expected to range between 0 (no alert) and 5 (extremely bad), based on the classes defined by /api/v1/atmo/classes. At the moment, it is using the '10th_max' value",
-            "attributes": atmo_stats,
+            "attributes": rec['stats'],
         })
 
         serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)

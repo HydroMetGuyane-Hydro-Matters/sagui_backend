@@ -88,6 +88,7 @@ class DashboardEntrySerializer(serializers.Serializer):
     id = serializers.CharField()
     alert_code = serializers.CharField()
     description = serializers.CharField()
+    histogram = serializers.JSONField()
     attributes = serializers.JSONField()
 
 

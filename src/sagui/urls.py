@@ -1,4 +1,5 @@
 from django.urls import path, re_path
+from django.shortcuts import redirect
 from django.views.generic import RedirectView
 from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
@@ -6,7 +7,8 @@ from . import views
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 urlpatterns = [
-    path('api/v1/', views.api_root),
+    path('', lambda req: redirect('/api/v1/')),
+    path('api/v1/', views.api_root, name="api_root"),
     path('api/v1/dashboard', views.Dashboard.as_view(), name="dashboard"),
 
     path('api/v1/flow_previ/stations', views.StationsPreviList.as_view(), name="flow-previ-get-stations-list"),
@@ -22,7 +24,7 @@ urlpatterns = [
     # Optional UI:
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='openapi-schema'), name='swagger-ui'),
     # path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('api/v1/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
+    # path('api/v1/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
     path('api/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
 ]
 
