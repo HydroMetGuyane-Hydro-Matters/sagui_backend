@@ -29,6 +29,101 @@ from sagui.utils import atmo, rain, \
 logger = logging.getLogger(__name__)
 
 
+def html_dashboard(request):
+    # Collect flow previ data
+    forecast_data = stations_forecast_utils.get_global_alert_info()
+    forecast_histogram = forecast_data['histogram']
+
+    forecast_data_summary = {
+        "Normal": forecast_histogram['n'],
+        "En alerte": sum([v for k, v in forecast_histogram.items() if k!='n']),
+    }
+
+    # Collect flow alert data
+    alerts_data = stations_alert_utils.get_global_alert_info()
+    alerts_histogram = alerts_data['histogram']
+
+    alerts_data_summary = {
+        "Normal": alerts_histogram['n'],
+        "En alerte": sum([v for k, v in alerts_histogram.items() if k!='n']),
+    }
+
+    # Collect rain data
+    rain_data = rain.get_global_alert_info()
+    rain_histogram = rain_data['histogram']
+    for k,v in rain_histogram.items():
+        rain_histogram[k] = int(v)
+
+    rain_data_summary = {
+        "Normal": int(rain_histogram['n']),
+        "En alerte": int(sum([v for k, v in rain_histogram.items() if k!='n'])),
+    }
+
+    # Collect atmo data
+    atmo_data = atmo.get_global_alert_info()
+    atmo_histogram = atmo_data['histogram']
+    for k,v in atmo_histogram.items():
+        atmo_histogram[k] = int(v)
+
+    atmo_data_summary = {
+        "Normal": int(atmo_histogram['a0']),
+        "En alerte": int(sum([v for k, v in atmo_histogram.items() if k!='a0'])),
+    }
+
+
+    flow_colors = {
+      "Normal": "rgba(0, 235, 108)",
+      "En alerte": "rgba(255, 69, 56)",
+      "n": "rgba(0, 235, 108)",
+      "a": "rgba(255, 69, 56)",
+      "d1": "rgba(255, 235, 59)",
+      "f1": "rgba(255, 235, 59)",
+      "d2": "rgba(253, 122, 0)",
+      "f2": "rgba(253, 122, 0)",
+      "d3": "rgba(255, 69, 56)",
+      "f3": "rgba(255, 69, 56)",
+      "r1": "rgba(255, 235, 59)",
+      "r2": "rgba(253, 122, 0)",
+      "r3": "rgba(255, 69, 56)",
+      "a0": "#00FFFF89",
+      "a1": "#54C372FF",
+      "a2": "#FFFF00FF",
+      "a3": "#EA4335FF",
+      "a4": "#980000FF",
+      "a5": "#674EA7FF",
+    }
+
+    context = {
+        'flow_colors': flow_colors,
+        'forecast_data_summary': forecast_data_summary,
+        'forecast_histogram': forecast_histogram,
+        'alerts_data_summary': alerts_data_summary,
+        'alerts_histogram': alerts_histogram,
+        'rain_histogram': rain_histogram,
+        'rain_data_summary': rain_data_summary,
+        'atmo_histogram': atmo_histogram,
+        'atmo_data_summary': atmo_data_summary,
+        'title': 'SAGUI dashboard',
+    }
+    return render(request, 'sagui/dashboard.html', context)
+
+
+def html_dashboard_flow(request):
+    stations_with_alerts = models.StationsWithFlowAlerts.objects.order_by('-name')
+    context = {
+        'stations_with_alerts': stations_with_alerts,
+        'title': 'SAGUI',
+    }
+    return render(request, 'sagui/dashboard_flow.html', context)
+#
+# class IndexView(generic.ListView):
+#     template_name = 'sagui/dashboard.html'
+#     context_object_name = 'stations_with_alerts'
+#
+#     def get_queryset(self):
+#         """Return the last five published questions."""
+#         return StationsWithFlowAlerts.objects.order_by('-name')
+
 @api_view(['GET'])
 def api_root(request, format=None):
     return Response({

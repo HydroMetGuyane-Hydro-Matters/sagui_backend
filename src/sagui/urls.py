@@ -26,6 +26,8 @@ urlpatterns = [
     # path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     # path('api/v1/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
     path('api/', RedirectView.as_view(pattern_name='swagger-ui', permanent=False)),
+    path('dashboards/', views.html_dashboard, name='html_dashboard'),
+    path('dashboards/flow/', views.html_dashboard_flow, name='html_dashboard_flow'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns, allowed=['json', 'html', 'csv'])

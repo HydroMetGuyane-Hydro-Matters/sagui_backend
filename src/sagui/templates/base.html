@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr" >
+<head>
+        <meta charset="utf-8" >
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ title|default:"SAGUI" }}</title>
+        {% block header_extras %}
+        {% endblock %}
+        <link href="{% static 'sagui/css/style.css' %}" rel="stylesheet">
+</head>
+<body>
+        <header>
+                <nav class="navbar">
+                        <div><a><img src="{% static 'sagui/logo.png' %}" alt="" width="50" height="50"></a></div>
+                        <div><div  class="title">SAGUI: Hydrogeologic Space Monitoring of French Guyana for the society</div></div>
+                        <div class="small"><a href="https://www.spaceclimateobservatory.org/fr/ophyse" target="_blank" translate="" class="small help">Find out more</a></div>
+                </nav>
+        </header>
+
+        <section>
+                {% block content %}
+                {% endblock %}
+        </section>
+
+        <footer>
+        </footer>
+</body>
+</html>
