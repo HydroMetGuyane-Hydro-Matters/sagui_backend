@@ -5,6 +5,6 @@ python3 manage.py migrate --noinput
 
 if [[ -d $STATIC_ROOT ]]; then
   rm -rf $STATIC_ROOT/*
-  python3 manage.py collectstatic
+  python3 manage.py collectstatic --noinput
 fi
 
