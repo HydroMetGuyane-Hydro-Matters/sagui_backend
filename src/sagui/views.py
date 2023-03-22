@@ -568,9 +568,9 @@ class AtmoAlertsFilesList(generics.GenericAPIView):
             d = datetime.strptime(re.search(r"[0-9]{8}", os.path.basename(f))[0], '%Y%m%d').strftime("%Y-%m-%d")
             results['results'].append({
                 'date': d,
-                'png': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.basename(f)}')),
-                'wld': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld')),
-                'geotiff': self.request.build_absolute_uri(staticfiles_storage.url(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif')),
+                'png': self.request.build_absolute_uri(f'/atmo/styled/{os.path.basename(f)}'),
+                'wld': self.request.build_absolute_uri(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.wld'),
+                'geotiff': self.request.build_absolute_uri(f'/atmo/styled/{os.path.splitext(os.path.basename(f))[0]}.tif'),
             })
 
         serializer = serializers.AtmoAlertsFilesSerializer(results, many=False)
