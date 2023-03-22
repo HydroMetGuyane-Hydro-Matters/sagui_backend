@@ -10,42 +10,63 @@
 <link href="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.css" rel="stylesheet">
 
 <script src="https://unpkg.com/bootstrap-table@1.21.3/dist/bootstrap-table.min.js"></script>
+<style>
+  .forecast {
+      background-color: #eeeeee;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="content">
 <br />
 <h3>Débits par station virtuelle (m3/s)</h3>
-{% if stations_with_alerts %}
+{% if stations_with_forecast %}
     <table class="table-wide table table-hover"
   data-toggle="table"
   data-search="true">
       <thead>
         <tr>
-          <th scope="col" data-sortable="true">Station</th>
-          <th scope="col">River</th>
-            {% for d in stations_with_alerts.0.levels reversed %}
+          <th scope="col" data-sortable="true" rowspan="2">Station</th>
+          <th scope="col" rowspan="2">Rivière</th>
+          <th scope="col" colspan="10">Débit calculé</th>
+          <th scope="col" colspan="10" class="forecast">Prévisions</th>
+        </tr>
+        <tr>
+            {% for d in stations_with_forecast.0.levels reversed %}
             {% if forloop.revcounter0 < 25 %}
-            <th  scope="col">{{ d.date }}</th>
+            <th  scope="col" class="{{ d.source }} date">{{ d.date }}</th>
             {% endif %}
             {% endfor %}
         </tr>
       </thead>
   <tbody>
-    {% for station in stations_with_alerts %}
+    {% for station in stations_with_forecast %}
         <tr>
-            <td><a href="/pages/{{ station.id }}/">{{ station.name }}</a></td>
+            <td>
+{#              <a href="/pages/{{ station.id }}/">{{ station.name }}</a>#}
+              {{ station.name }}
+            </td>
             <td>{{ station.river }}</td>
             {% for d in station.levels reversed %}
               {% if forloop.revcounter0 < 25 %}
               <td class="{{ d.level }}">
                 <div class="cell">
                 <span class="hide">{{ d.level }}</span>
-                <div class="value">5.123</div>
-                <div class="evolution"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-</svg>
- +12% </div></div>
+                <div class="value">{{ d.flow }}</div>
+                <div class="evolution">
+                  {% if d.anomaly > 0 %}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                    </svg>
+                    +{{ d.anomaly }}%
+                  {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
+                    </svg>
+                    {{ d.anomaly }}%
+                  {% endif %}
+                </div></div>
               </td>
               {% endif %}
             {% endfor %}

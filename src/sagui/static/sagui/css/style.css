@@ -54,8 +54,22 @@ a {
     align-items: center;
 }
 .w-6 {
-    width: 32px;
+    width: 24px;
+}
+.table {
+  font-size: medium;
+}
+th {
+  text-align: center;
+  vertical-align: middle !important;
 }
 .value {
     font-weight: bold;
+    font-size: medium;
+}
+.date {
+    font-size: small;
+}
+.evolution {
+    font-size: x-small;
 }

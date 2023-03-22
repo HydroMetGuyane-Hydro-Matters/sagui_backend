@@ -109,9 +109,9 @@ def html_dashboard(request):
 
 
 def html_dashboard_flow(request):
-    stations_with_alerts = models.StationsWithFlowAlerts.objects.order_by('-name')
+    stations_with_forecast = models.StationsWithFlowPrevi.objects.order_by('-name')
     context = {
-        'stations_with_alerts': stations_with_alerts,
+        'stations_with_forecast': stations_with_forecast,
         'title': 'SAGUI',
     }
     return render(request, 'sagui/dashboard_flow.html', context)

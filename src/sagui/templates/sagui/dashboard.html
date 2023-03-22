@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header_extras %}
+{#  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">#}
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
   .dash-grid {
@@ -23,10 +24,37 @@
   #alerts_data,
   #forecast_data,
   #rain_data {
-    color: blue;
+    color: #007bff;
   }
   #atmo_data {
     color: brown;
+  }
+
+  .btn {
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: 1px solid transparent;
+      border-top-color: transparent;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-left-color: transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  }
+  .btn-primary {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
   }
 </style>
 {% endblock %}
@@ -154,6 +182,8 @@
       <svg id="forecast_pie" width="300" height="300"></svg>
       <h4>Répartition par niveau d'alerte</h4>
       <svg id="forecast_bar" width="300" height="200"></svg>
+      <a href="flow/" class="btn btn-primary" role="button">Détail par station</a>
+
     </div>
       <script>
     var data = [{{ forecast_data_summary.a }}, {{ forecast_data_summary.n }}];
