@@ -105,4 +105,4 @@ class AtmoAlertCategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model = AtmoAlertCategories
         # fields = '__all__'
-        fields = ('label', 'label_fr', 'label_en', 'label_pt', 'bounds_min', 'bounds_max', 'legend_label', 'alert_label', 'color')
+        fields = ('label', 'label_fr', 'label_en', 'label_pt', 'bounds_min', 'bounds_max', 'legend_label', 'alert_code', 'color')
