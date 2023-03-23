@@ -330,7 +330,7 @@ class AtmoAlertCategories(models.Model):
     bounds_max = models.FloatField('Max bound', default=0, null=False, help_text='Max value')
     legend_label = models.CharField(max_length=50, blank=True, null=True, help_text='If provided, replaces min-max for the generation of the legend')
     alert_label = models.CharField(max_length=50, blank=True, null=True, help_text='Label for the alert')
-    alert_code = models.CharField(max_length=2, blank=True, null=True, help_text='Code for the alert', primary_key=True)
+    alert_code = models.CharField(max_length=2, blank=True, null=True, help_text='Code for the alert')
     color = ColorField(default='#FFFFFFFF', format="hexa")
 
     class Meta:
