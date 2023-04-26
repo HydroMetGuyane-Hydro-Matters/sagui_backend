@@ -29,3 +29,10 @@ def get_global_alert_info():
         'global_alert_level': global_alert_level,
         'histogram' : levels_stats,
     }
+
+def get_stations_alert_info():
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT id, name, levels->0->>\'level\' AS l FROM guyane.stations_with_flow_alerts')
+        recs = cursor.fetchall()
+    levels = [{'id': r[0], 'name': r[1], 'alert_level': r[2]} for r in recs] if recs else []
+    return levels

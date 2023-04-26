@@ -71,7 +71,7 @@ def get_global_alert_info():
         "f3": 0,
     }
     for s in stations_with_previ:
-        # We take the forcast data, J+5
+        # We take the forecast data, J+5
         forecast_levels = [lev for lev in s.levels if lev['source'] == 'forecast']
         # J+5 since the list is reversed order by date
         l = forecast_levels[-5]['level']
@@ -87,3 +87,7 @@ def get_global_alert_info():
             "anomaly_max": global_alert_data[4],
         },
     }
+
+def get_stations_alert_info():
+    stations_with_previ = models.StationsWithFlowPrevi.objects.values()
+    return stations_with_previ

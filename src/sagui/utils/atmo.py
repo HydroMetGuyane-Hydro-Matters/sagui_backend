@@ -35,12 +35,14 @@ def get_global_alert_info():
             for c in alert_categories:
                 if alert_value > c.bounds_min:
                     alert_code = idx
+                    alert_cat = c
                     break
                 # decrease index
                 idx = idx - 1
 
             return {
                 'global_alert_level': f'a{alert_code}',
+                'global_alert_cat': alert_cat,
                 'histogram': histogram,
                 'stats': stats,
             }

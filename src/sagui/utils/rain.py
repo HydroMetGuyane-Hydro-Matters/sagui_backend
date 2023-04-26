@@ -20,6 +20,22 @@ ALERT_LEVELS = [
 ]
 
 
+def alert_code_to_rain_mm(code):
+    for l in ALERT_LEVELS:
+        if l[1] == code:
+            return l[0]
+
+
+def rain_mm_to_alert_code(mm):
+    for l in ALERT_LEVELS:
+        if l[0] == mm:
+            return l[1]
+
+
+def get_alert_levels_choices():
+   return tuple((f'{i[0]}',f'{i[0]} mm', ) for i in ALERT_LEVELS)
+
+
 def get_global_alert_info():
     # we will use thresholds 5, 20 and 50mm
     # WE will need them in reversed order (higher level first)
