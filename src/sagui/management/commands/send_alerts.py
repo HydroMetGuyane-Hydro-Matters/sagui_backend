@@ -28,12 +28,7 @@ class Command(BaseCommand):
         for sub in subscriptions:
             with translation.override(sub.language):
                 self.stdout.write(f'Processing alerts for subscribee {sub.email}')
-                alerts = {
-                    'stations_flow':None,
-                    'stations_forecast':None,
-                    'rain':None,
-                    'atmo':None,
-                }
+                alerts = dict()
                 stations_on_watch = sub.stations_watch.all()
                 station_ids = list(s.id for s in stations_on_watch)
                 station_names = list(s.name for s in stations_on_watch)
@@ -57,6 +52,11 @@ class Command(BaseCommand):
                 if sub.atmo_active and atmo_info['global_alert_level']:
                     if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
                         alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
+
+                if not alerts:
+                    # don't send email
+                    continue
+
                 tpl = get_template("sagui/alert_email.txt")
                 txt_email = tpl.render(context={'sub':sub,
                                                  'alerts':alerts,
