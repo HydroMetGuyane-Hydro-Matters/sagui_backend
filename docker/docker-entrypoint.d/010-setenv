@@ -6,3 +6,6 @@ set -e
 if [[ -f $DJANGO_ENV_FILE ]]; then
   cp $DJANGO_ENV_FILE /app/sagui_backend/.env
 fi
+if [[ -f $SMTP_ENV_FILE ]]; then
+  cat $SMTP_ENV_FILE >> /app/sagui_backend/.env
+fi

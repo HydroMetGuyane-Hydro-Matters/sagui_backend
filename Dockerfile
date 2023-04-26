@@ -13,6 +13,7 @@ RUN apt-get update && \
         binutils \
         libproj-dev \
         gdal-bin \
+        gettext \
         netcat \
         postgresql-client \
 #        postgresql-10-postgis-3-scripts \
