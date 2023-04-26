@@ -38,7 +38,7 @@ msgstr "5-day forecasts"
 msgid "Rain"
 msgstr "Rain"
 msgid "global_alert_level"
-msgstr "Global status"
+msgstr "Global alert level"
 msgid "atmospheric_pollution"
 msgstr "Atmospheric pollution"
 msgid "more_about_this"
@@ -67,19 +67,19 @@ msgid "atmo_a0"
 msgstr "Good ( < 0.4)"
 
 msgid "atmo_a1"
-msgstr "Medium ( 0.4-0.6 mm)"
+msgstr "Medium ( 0.4-0.6)"
 
 msgid "atmo_a2"
-msgstr "Degraded ( 0.6-0.9 mm)"
+msgstr "Degraded ( 0.6-0.9)"
 
 msgid "atmo_a3"
-msgstr "Bad ( 0.9-1.2 mm)"
+msgstr "Bad ( 0.9-1.2)"
 
 msgid "atmo_a4"
-msgstr "Very bad ( 1.2-1.5 mm)"
+msgstr "Very bad ( 1.2-1.5)"
 
 msgid "atmo_a5"
-msgstr "Extremely bad ( > 1.5 mm)"
+msgstr "Extremely bad ( > 1.5)"
 
 msgid "f3"
 msgstr "Flood, high"
