@@ -54,8 +54,6 @@ class Command(BaseCommand):
                 if sub.rain_active and rain_info['global_alert_level']:
                     if sagui_utils.rain.alert_code_to_rain_mm(rain_info['global_alert_level']) >= int(sub.rain_level):
                         alerts['rain'] = { 'global_alert_level' : 'rain_'+rain_info['global_alert_level']}
-                self.stdout.write(f"Atmo_info: {atmo_info['global_alert_level']}")
-                self.stdout.write(f"Atmo_info: {sub.atmo_level.alert_code}")
                 if sub.atmo_active and atmo_info['global_alert_level']:
                     if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
                         alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
