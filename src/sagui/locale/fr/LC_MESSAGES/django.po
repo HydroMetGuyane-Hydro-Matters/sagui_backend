@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-04-26 00:05+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: templates/gis/admin/openlayers-osm-custom.html:12
+msgid "Delete all Features"
+msgstr ""
+
+#: templates/gis/admin/openlayers-osm-custom.html:13
+msgid "Debugging window (serialized value)"
+msgstr ""
+
+#: templates/sagui/alert_email.html:2
+msgid "alert_email_title"
+msgstr "SAGUI - Alertes du jour : "
+msgid "Stations"
+msgstr "Stations"
+msgid "stations_flow"
+msgstr "Débits "
+msgid "stations_forecast"
+msgstr "Prévisions à 5 jours "
+msgid "Rain"
+msgstr "Pluie "
+msgid "global_alert_level"
+msgstr "Etat global "
+msgid "atmospheric_pollution"
+msgstr "Pollution atmosphérique "
+msgid "more_about_this"
+msgstr "Plus d'infos sur https://sagui.hydro-matters.fr/dashboards/ (graphiques) ou \
+https://sagui.hydro-matters.fr/sagui (carte)"
+msgid "more_about_this_html"
+msgstr "Plus d'infos sur <a href='https://sagui.hydro-matters.fr/dashboards/'>https://sagui.hydro-matters.fr/dashboards/</a> (graphiques) ou \
+<a href='https://sagui.hydro-matters.fr/sagui'>https://sagui.hydro-matters.fr/sagui</a> (carte)"
+msgid "about_this_email"
+msgstr "Vous recevez cet email parce que vous avez souscrit aux notifications de la plateforme SAGUI. Si vous souhaitez \
+vous désinscrire, veuillez le signifier par email à jean.pommier@pi-geosolutions.fr avec l'objet suivant : \
+[SAGUI] unsubscribe."
+
+#: management/commands/send_alerts.py:61
+msgid "rain_n"
+msgstr "Pas d'alerte ( 0-5 mm)"
+
+msgid "rain_r1"
+msgstr "Basse (5-20 mm)"
+
+msgid "rain_r2"
+msgstr "Moyenne (20-50 mm)"
+
+msgid "rain_r3"
+msgstr "Elevée (> 50 mm)"
+
+msgid "atmo_a0"
+msgstr "Bon ( inf 0.4)"
+
+msgid "atmo_a1"
+msgstr "Moyen ( 0.4-0.6 mm)"
+
+msgid "atmo_a2"
+msgstr "Dégradé ( 0.6-0.9 mm)"
+
+msgid "atmo_a3"
+msgstr "Mauvais ( 0.9-1.2 mm)"
+
+msgid "atmo_a4"
+msgstr "Très mauvais ( 1.2-1.5 mm)"
+
+msgid "atmo_a5"
+msgstr "Extrêmement mauvais ( > 1.5 mm)"
+
+msgid "f3"
+msgstr "Inondation élevée"
+
+msgid "f2"
+msgstr "Inondation modérée"
+
+msgid "f1"
+msgstr "Inondation faible"
+
+msgid "n"
+msgstr "Pas d'alerte"
+
+msgid "d3"
+msgstr "Sécheresse élevée"
+
+msgid "d2"
+msgstr "Sécheresse modérée"
+
+msgid "d1"
+msgstr "Sécheresse faible"

@@ -1,0 +1,40 @@
+{% load i18n %}
+{% language 'fr' %}{% autoescape off %}
+{% translate "alert_email_title" %}
+
+{% if alerts.stations_flow or alerts.stations_forecast %}
+{% translate "Stations" %}
+========
+  {% if alerts.stations_flow %}
+  {% translate "stations_flow" %}
+  -----------
+  {%  for station in alerts.stations_flow %}
+    - {{ station.name }}: {% translate station.alert_level %}
+  {% endfor %}
+  {% endif %}
+  {% if alerts.stations_forecast %}
+  {% translate "stations_forecast" %}
+  -----------
+  {%  for station in alerts.stations_forecast %}
+    - {{ station.name }}: {% translate station.forecast.level %}
+  {% endfor %}
+  {% endif %}
+{% endif %}
+{% if alerts.rain %}
+{% translate "Rain" %}
+========
+ {% translate "global_alert_level" %}: {%  trans alerts.rain.global_alert_level %}
+{% endif %}
+{% if alerts.atmo %}
+{% translate "atmospheric_pollution" %}
+=====================
+ {% translate "global_alert_level" %}: {%  trans alerts.atmo.global_alert_level %}
+{% endif %}
+
+
+{% translate "more_about_this" %}
+
+---------------------------------------------------
+
+{% translate "about_this_email" %}
+{% endautoescape %}{% endlanguage %}

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block header_extras %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .dash-grid {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+  .dash-block {
+      max-width: 400px;
+  }
+  .dash-block canvas {
+      margin: 2em;
+  }
+  .pie-md {
+      width: 400px;
+      height: 400px;
+  }
+  .bar-md {
+      width: 400px;
+      height: 200px !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+{#  <h2>Débits par station virtuelle (m3/s)</h2>#}
+  <div class="dash-grid">
+    {% if forecast_data %}
+    <div class="dash-block">
+      <canvas id="forecast_data_chart" class="pie-md" aria-label="Forecast data" role="Forecast data pie charts"></canvas>
+      <canvas id="forecast_data_bars" class="bar-md" aria-label="Forecast" role="Forecast darts"></canvas>
+    </div>
+  {% comment %} Pass tje data as json script data {% endcomment %}
+  {{ forecast_data|json_script:"forecast_data" }}
+  <script>
+    const ctx = document.getElementById('forecast_data_chart').getContext("2d");
+    ctx.canvas.width = 400;
+    ctx.canvas.height = 400;
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['In alert', 'Normal'],
+        datasets: [{
+          label: 'Stations in alert mode (5d forecast)',
+          data: [{{ forecast_data_summary.a }}, {{ forecast_data_summary.n }}],
+          backgroundColor: ["rgb(255, 69, 56)", "rgb(0, 235, 108)"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+          plugins: {
+              title: {
+                display: true,
+                text: 'Stations in alert mode (5d forecast)',
+              },
+              legend: {
+                  display: true,
+                  reverse: true
+              }
+          }
+      }
+    });
+
+    const data = JSON.parse(document.getElementById('forecast_data').textContent);
+    console.log(data);
+    var xArray = Object.keys(data) // return list of keys
+    var yArray = Object.values(data) // return list of values
+    const ctx2 = document.getElementById('forecast_data_bars');
+
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: xArray,
+        datasets: [{
+          label: 'Stations: ',
+          data: yArray,
+          backgroundColor: ["rgb(255, 69, 56)","rgb(253, 122, 0)","rgb(255, 235, 59)","rgb(0, 235, 108)","rgb(255, 235, 59)","rgb(253, 122, 0)","rgb(255, 69, 56)"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+              title: {
+                display: true,
+                text: 'Alert levels repartition (5d forecast)',
+              },
+              legend: {
+                  display: true,
+                  reverse: true
+              }
+          }
+      }
+    });
+  </script>
+  {% endif %}
+
+  {% if alerts_data %}
+    <div class="dash-block">
+      <canvas id="alerts_data_chart" class="pie-md" aria-label="Forecast data" role="Forecast data pie charts"></canvas>
+      <canvas id="alerts_data_bars" class="bar-md" aria-label="Forecast" role="Forecast darts"></canvas>
+    </div>
+  {% comment %} Pass tje data as json script data {% endcomment %}
+  {{ alerts_data|json_script:"alerts_data" }}
+  <script>
+    const ctx3 = document.getElementById('alerts_data_chart');
+
+    new Chart(ctx3, {
+      type: 'pie',
+      data: {
+        labels: ['In alert', 'Normal'],
+        datasets: [{
+          label: 'Stations in alert mode (NRT flow)',
+          data: [{{ alerts_data_summary.a }}, {{ alerts_data_summary.n }}],
+          backgroundColor: ["rgb(255, 69, 56)", "rgb(0, 235, 108)"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+          plugins: {
+              title: {
+                display: true,
+                text: 'Stations in alert mode (NRT flow)',
+              },
+              legend: {
+                  display: true,
+                  reverse: true
+              }
+          }
+      }
+    });
+
+    const data4 = JSON.parse(document.getElementById('alerts_data').textContent);
+    console.log(data);
+    var xArray = Object.keys(data4) // return list of keys
+    var yArray = Object.values(data4) // return list of values
+    const ctx4 = document.getElementById('alerts_data_bars');
+
+    new Chart(ctx4, {
+      type: 'bar',
+      data: {
+        labels: xArray,
+        datasets: [{
+          label: 'Stations: ',
+          data: yArray,
+          backgroundColor: ["rgb(253, 122, 0)","rgb(0, 235, 108)","rgb(255, 235, 59)","rgb(253, 122, 0)","rgb(255, 69, 56)"],
+          borderWidth: 1
+        }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              title: {
+                display: true,
+                text: 'Alert levels repartition (NRT flow)',
+              },
+              legend: {
+                  display: true,
+                  reverse: true
+              }
+          }
+      }
+    });
+  </script>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% load i18n %}
+{% language 'fr' %}
+<html>
+<head>
+  <style>
+    h1 {
+        font-size: 1.5rem;
+        color: darkorchid;
+    }
+    h2 {
+        font-size: 1.2rem;
+        color: dodgerblue;
+        padding-left: 1em;
+    }
+    h3 {
+        font-size: 1.1rem;
+        color: black;
+        padding-left: 2em;
+    }
+    ul {
+        margin-left: 2em;
+    }
+    li.f1, li.d1 {
+        color: black;
+    }
+    li.f2, li.d2 {
+        color: rgb(253, 122, 0);
+    }
+    li.f3, li.d3 {
+        color: rgb(255, 69, 56);
+        font-weight: bold;
+    }
+    .pad_left {
+        margin-left: 2.5em;
+    }
+    .more {
+        margin-top: 3em;
+    }
+    .footnote {
+        border-top: 1px solid #474747;
+        margin-top: 2em;
+        font-size: small;
+        font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>{% translate "alert_email_title" %}</h1>
+
+  {% if alerts.stations_flow or alerts.stations_forecast %}
+  <h2>{% translate "Stations" %}</h2>
+    {% if alerts.stations_flow %}
+    <h3>{% translate "stations_flow" %}</h3>
+    <ul>
+    {%  for station in alerts.stations_flow %}
+      <li class="{{ station.alert_level }}">{{ station.name }}: {% translate station.alert_level %}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% if alerts.stations_forecast %}
+    <h3>{% translate "stations_forecast" %}</h3>
+    <ul>
+    {%  for station in alerts.stations_forecast %}
+      <li class="{{ station.forecast.level }}">{{ station.name }}: {% translate station.forecast.level %}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+  {% endif %}
+  {% if alerts.rain %}
+  <h2>{% translate "Rain" %}</h2>
+  <p class="pad_left">{% translate "global_alert_level" %}: <b>{%  trans alerts.rain.global_alert_level %}</b></p>
+  {% endif %}
+  {% if alerts.atmo %}
+  <h2>{% translate "atmospheric_pollution" %}</h2>
+  <p class="pad_left">{% translate "global_alert_level" %}: <b>{%  trans alerts.atmo.global_alert_level %}</b></p>
+  {% endif %}
+
+  <p class="more">{% translate "more_about_this_html" %}</p>
+
+  <p class="footnote">{% translate "about_this_email" %}</p>
+</body>
+</html>
+{% endlanguage %}
