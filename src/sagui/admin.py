@@ -111,3 +111,23 @@ class SaguiConfigAdmin(admin.ModelAdmin):
             # if there's already an entry, do not allow adding
             return not models.SaguiConfig.objects.exists()
         return False
+
+
+@admin.register(models.AlertSubscriptions)
+class AlertSubscriptionsAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Subscriber', {
+            'fields': ('email', 'language',)
+        }),
+        ('Stations alerts', {
+            'fields': ('stations_forecasts_active', 'stations_flow_active', 'stations_watch')
+        }),
+        ('Rain alerts', {
+            'fields': ('rain_active', 'rain_level', )
+        }),
+        ('Atmo alerts', {
+            'fields': ('atmo_active', 'atmo_level',)
+        }),
+    )
+    filter_horizontal = ['stations_watch']
+    pass

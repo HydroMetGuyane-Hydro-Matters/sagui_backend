@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.gis.db import models as geomodels
 from colorfield.fields import ColorField
 
+import sagui.utils.rain
+
+
 # HYFAA Data models -> store them in hyfaa schema ?
 
 class AbstractHyfaaData(models.Model):
@@ -237,7 +240,7 @@ class StationsReferenceFlowPeriod(models.Model):
     period = models.CharField(max_length=20, null=False, unique=True, default="2010-2020")
 
     class Meta:
-        verbose_name = 'Stations reference flow period: period (years) that can be used for the pre-global warming data series'
+        verbose_name = 'Stations reference flow period: period (years) that can be used for the pre-global warming data serie'
         db_table = 'stations_reference_flow_period'
     def __str__(self):
         return self.period
@@ -334,7 +337,7 @@ class AtmoAlertCategories(models.Model):
     color = ColorField(default='#FFFFFFFF', format="hexa")
 
     class Meta:
-        verbose_name = 'Categories used for atmospheric data alerts'
+        verbose_name = 'Categories used for atmospheric data alert'
         ordering = ['bounds_min']
 
     def __str__(self):
@@ -364,3 +367,35 @@ class SaguiConfig(models.Model):
 
     def __str__(self):
         return 'Max ordem: {} | Dataset used: {}'.format(self.max_ordem, self.use_dataset)
+
+
+class AlertSubscriptions(models.Model):
+    class Langs(models.TextChoices):
+        FR = 'fr'
+        EN = 'en'
+        BR = 'pt-br'
+
+    email = models.EmailField(null=False, primary_key=True, max_length = 254, help_text="Subscriber's email")
+    language = models.CharField(
+        max_length=5,
+        choices=Langs.choices,
+        default=Langs.FR,
+        help_text = "Preferred language for the alerts messages",
+    )
+    stations_forecasts_active = models.BooleanField(null=False, default=False, verbose_name="Activate stations forecast alerts")
+    stations_flow_active = models.BooleanField(null=False, default=False, verbose_name="Activate stations flow alerts")
+    stations_watch = models.ManyToManyField(Stations, verbose_name="Stations to watch", blank=True, null=True,)
+    rain_active = models.BooleanField(null=False, default=False, verbose_name="Activate rain level alerts")
+    rain_level = models.CharField(max_length = 20, default='0', blank=True, null=True,
+                                  choices=sagui.utils.rain.get_alert_levels_choices(),
+                                  verbose_name="Lower threshold to trigger an alert")
+    atmo_active = models.BooleanField(null=False, default=False, verbose_name="Activate atmospheric pollution alerts")
+    atmo_level = models.ForeignKey(AtmoAlertCategories, on_delete=models.SET_NULL,
+                                   blank=True, null=True,
+                                   verbose_name="Lower threshold to trigger an alert")
+
+    class Meta:
+        verbose_name = 'Alert subscription'
+
+    def __str__(self):
+        return self.email
