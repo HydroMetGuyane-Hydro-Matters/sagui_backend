@@ -46,7 +46,7 @@ def get_global_alert_info():
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                'SELECT ROUND(avg((values->0->>\'rain\')::numeric),1) AS l FROM guyane.rainfall_minibasin_aggregated_geo')
+                "SELECT ROUND(MAX((values->0->>'rain')::numeric),1) AS l FROM guyane.rainfall_subbasin_aggregated_geo")
             rec = cursor.fetchone()
             mean_rain = rec[0] if rec else None
             for lev in reversed_alert_levels:
