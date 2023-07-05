@@ -552,7 +552,7 @@ class AtmoAlertsFilesList(generics.GenericAPIView):
         files_list = sorted(glob(f'{files_path}/*_aai.png'), reverse=True)[:10]
 
         results = {
-            'count': '5',
+            'count': len(files_list),
             'description': 'map of atmospheric alerts based on Sentinel5P absorbing aerosol index data',
             'extent': {
                 'east': -57,
@@ -561,7 +561,7 @@ class AtmoAlertsFilesList(generics.GenericAPIView):
                 'north': 7,
             },
             'classes': reverse('atmo-get-classes', request=request, format=format),
-            'legend': self.request.build_absolute_uri(staticfiles_storage.url('/atmo/styled/legend.png')),
+            'legend': self.request.build_absolute_uri('/atmo/styled/legend.png'),
             'results': [],
         }
         for f in files_list:
