@@ -78,8 +78,15 @@ def get_global_alert_info():
         # forecast_data[l].append(s.name)
         histogram[l] += 1
 
+    if not global_alert_data:
+        return {
+            "msg": "Error: could not compute global alert data"
+        }
+
     return {
-        'global_alert_level': global_alert_data[1] if global_alert_data else '',
+        # 'global_alert_level': global_alert_data[1] if global_alert_data else '',
+        'global_alert_level': global_alert_data[5]  if (abs(global_alert_data[4]) > abs(global_alert_data[2]))
+                                                    else global_alert_data[3],
         'histogram': histogram,
         'stats': {
             "anomaly_avg": global_alert_data[0],
