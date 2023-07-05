@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 # global constants
 # FLOW_ALERT_LEVELS = ['f3', 'f2', 'f1', 'd3', 'd2', 'd1', 'n']
-FLOW_ALERT_LEVELS = ['d2', 'n', 'f1', 'f2', 'f3']
+FLOW_ALERT_LEVELS = ['f3', 'f2', 'd2', 'f1', 'n']
 
 
 def get_global_alert_info():
