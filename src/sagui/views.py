@@ -496,7 +496,7 @@ class Dashboard(APIView):
             "id": "rain_alerts",
             "alert_code": rec['global_alert_level'],
             "histogram": rec['histogram'],
-            "description": "Rain level alert code (<5mm = normal, <20mm = low, <50mm = medium, above = high)",
+            "description": "Rain level alert code (<5mm = normal, <20mm = low, <50mm = medium, above = high) based on sub-basins. Histogram shows mini-basins stats",
             "attributes": {},
         })
 
