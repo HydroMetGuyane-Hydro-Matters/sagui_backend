@@ -1,5 +1,5 @@
 {% load i18n %}
-{% language 'fr' %}{% autoescape off %}
+{% autoescape off %}
 {% translate "alert_email_title" %}
 
 {% if alerts.stations_flow or alerts.stations_forecast %}
@@ -37,4 +37,4 @@
 ---------------------------------------------------
 
 {% translate "about_this_email" %}
-{% endautoescape %}{% endlanguage %}
+{% endautoescape %}

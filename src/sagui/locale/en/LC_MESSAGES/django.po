@@ -44,6 +44,9 @@ msgstr "Atmospheric pollution"
 msgid "more_about_this"
 msgstr "More info on https://sagui.hydro-matters.fr/dashboards/ (graphics) or \
 https://sagui.hydro-matters.fr/sagui (map)"
+msgid "more_about_this_html"
+msgstr "More info on <a href='https://sagui.hydro-matters.fr/dashboards/'>https://sagui.hydro-matters.fr/dashboards/</a> (charts) or \
+<a href='https://sagui.hydro-matters.fr/sagui'>https://sagui.hydro-matters.fr/sagui</a> (map)"
 msgid "about_this_email"
 msgstr "You are receiving this email because you asked for notifications from the SAGUI platform when values reach a \
 certain level. If you want to unsubscribe, please send an email to jean.pommier@pi-geosolutions.fr with the following \
