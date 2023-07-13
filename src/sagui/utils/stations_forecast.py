@@ -21,8 +21,9 @@ def get_global_alert_info():
 
         with connection.cursor() as cursor:
             query = '''
+        -- Use current day+5d for forecast alerts
         WITH most_recent_date AS (
-            SELECT DISTINCT "date" AS d FROM guyane.hyfaa_data_assimilated ORDER BY "date" DESC LIMIT 1
+            SELECT DISTINCT "date"+5 AS d FROM guyane.hyfaa_data_assimilated ORDER BY d DESC LIMIT 1
         ) ,
         flows AS (
             SELECT cell_id, flow, "date" FROM guyane.{tbl}
