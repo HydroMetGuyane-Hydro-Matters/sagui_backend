@@ -14,7 +14,7 @@ RUN apt-get update && \
         libproj-dev \
         gdal-bin \
         gettext \
-        netcat \
+        netcat-openbsd \
         postgresql-client \
 #        postgresql-10-postgis-3-scripts \
 #        postgresql-plpython-10 \
