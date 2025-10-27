@@ -1,11 +1,11 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 LABEL project="sagui"
 LABEL org.opencontainers.image.authors="jeanpommier@pi-geosolutions.fr"
 
 # set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
