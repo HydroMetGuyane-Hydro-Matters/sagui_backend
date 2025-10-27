@@ -501,14 +501,14 @@ class Dashboard(APIView):
         })
 
         # 4. Atmospheric alert entry
-        rec = atmo.get_global_alert_info()
-        dash_entries.append({
-            "id": "atmo_alerts",
-            "alert_code": rec['global_alert_level'],
-            "histogram": rec['histogram'],
-            "description": "Alert code is expected to range between 0 (no alert) and 5 (extremely bad), based on the classes defined by /api/v1/atmo/classes. At the moment, it is using the '10th_max' value",
-            "attributes": rec['stats'],
-        })
+        # rec = atmo.get_global_alert_info()
+        # dash_entries.append({
+        #     "id": "atmo_alerts",
+        #     "alert_code": rec['global_alert_level'],
+        #     "histogram": rec['histogram'],
+        #     "description": "Alert code is expected to range between 0 (no alert) and 5 (extremely bad), based on the classes defined by /api/v1/atmo/classes. At the moment, it is using the '10th_max' value",
+        #     "attributes": rec['stats'],
+        # })
 
         serializer = serializers.DashboardEntrySerializer(dash_entries, many=True)
         return Response(serializer.data)
