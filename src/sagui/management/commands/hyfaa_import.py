@@ -314,8 +314,9 @@ class Command(BaseCommand):
         last_published_day = tbl_state.last_updated_jd
         last_updated_without_errors_jd = tbl_state.last_updated_without_errors_jd
 
-        # Filter to only the times posterior to last update (fetching the time the data was added
-        # -> handles updates on old data if needs be
+        # Filter to only the times posterior to
+        # - last successful update
+        # - current day - refresh_daysdelta: forces refresh on recent days (configurable span). Causes full update for forecast data, which is good
         update_times = list(filter(lambda t: (t[2] > last_updated_without_errors_jd)
              or (t[1] >= round(hyfaautils.datetime_to_julianday(datetime.now(timezone.utc))) - self.refresh_daysdelta), times_array))
 

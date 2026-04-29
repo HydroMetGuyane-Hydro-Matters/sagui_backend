@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas as pd
 import psycopg2
+import sqlite3
 import psycopg2.extras as extras
 from datetime import datetime
 from time import perf_counter
@@ -47,7 +48,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-r', '--rootpath',
                             default=settings.SAGUI_SETTINGS.get('RAINFALL_NETCDF_FILES_PATH', ''),
-                            help='NetCDF4 files root path (i.e. the path of the folder forcing_onmesh_db/data_store/)')
+                            help='Path to the sqlite DB listing the netcdf files (i.e. the path to forcing_onmesh_db/database_manager.sql)')
         parser.add_argument('-d', '--db_connect_url',
                             default=settings.SAGUI_SETTINGS.get('HYFAA_DATABASE_URI', None),
                             help='The connection URL for the DB. (Default: "postgresql://postgres:sagui@localhost:5432/sagui")')
@@ -83,7 +84,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("DB is up to date"))
             return
 
-
         if self.force_update:
             self.stdout.write("Emptying the table before loading the new data (--force_update was enabled)")
             with transaction.atomic():
@@ -94,8 +94,8 @@ class Command(BaseCommand):
         errors = 0
         concatenated_df = pd.DataFrame()
         for f in new_files:
-            self.stdout.write("Reading {}".format(os.path.basename(f)))
-            df = self.netcdf_to_dataframe(f)
+            self.stdout.write("Reading {}".format(os.path.basename(f[0])))
+            df = self.netcdf_to_dataframe(f[0], f[1])
             concatenated_df = pd.concat([df, concatenated_df], ignore_index=True)
             if (counter % self.commit_page_size == 0) or (
                     f == new_files[-1]):  # last part means is last time element
@@ -118,10 +118,9 @@ class Command(BaseCommand):
 
             counter +=1
 
-        # Update the state table
-        # Get the lastest update date from the filenames
-        regex = r'DATA_[0-9T]*_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
-        update_dates = [self._datetime_from_filename(f, regex) for f in new_files]
+        # Update the state table with the latest update date
+        update_dates = [datetime.fromisoformat(f[1]+"+00:00") for f in new_files]
+        # update_dates = [self._datetime_from_filename(f, regex) for f in new_files]
         last_update_date = max(update_dates)
         last_updated_without_errors = last_update_date if not errors else self.last_updated_without_errors
         tbl_state = ImportState.objects.update_or_create(tablename=self.tablename, defaults={
@@ -139,9 +138,9 @@ class Command(BaseCommand):
     def _get_files_list(self):
         """
         List the files to import:
-        - retrieve information from the state table, to determine the last import date
-        - compare it with the folder's content (note: it's not using the sqlitedb)
-        Returns: a list of file names (strings)
+        - retrieve information from the state table, to determine the last import date. Unless self.force_update is True, then it will always import everything
+        - load the files list from the sqlite db
+        Returns: a list of tuples (file names, date)
         """
         tbl_state = ImportState.objects.filter(tablename__exact=self.tablename)
 
@@ -157,31 +156,46 @@ class Command(BaseCommand):
             self.stdout.write("Importing for the first time: it will take some time (importing all dates in the file)")
 
         # List files that are more recent than that
-        last_updated_text = last_updated_without_errors.strftime("%Y%m%dT%H%M")
-        # regex = '(.*)DATA_([0-9T]*)_'+last_updated_text+'([0-9]*)_([0-9]*)\\.nc'
-        regex2 = '.*DATA_[0-9T]*_(\d{8}T\d{4})[0-9]*_[0-9]*\\.nc'
-        all_filenames = glob.glob('{path}/*.nc'.format(path=self.rootpath))
-        new_files = sorted([s for s in all_filenames if re.search(regex2, s).group(1) > last_updated_text])
-        if not new_files:
-            return None
-
-        # Some days might have been downloaded several times with different datestamps (last part of the name)
-        # => we only need the most recent one
-        filtered_new_files = []
-        for i in range(len(new_files)-1):
-            if os.path.basename(new_files[i])[:18] != os.path.basename(new_files[i+1])[:18] :
-                filtered_new_files.append(new_files[i])
-        filtered_new_files.append(new_files[-1]) # last one is always the most recent, since it is a sorted list
+        last_updated_text = last_updated_without_errors.strftime("%Y-%m-%d")
+        # Execute a query over the sqlite DB
+        conn = sqlite3.connect(self.rootpath)
+        cur = conn.cursor()
+        cur.execute(f'''
+            SELECT file_path, data_type, date_data, date_added_to_db, date_created, product_type, file_status, grid_status
+            FROM (
+              SELECT *,
+                ROW_NUMBER() OVER (
+                  PARTITION BY DATE(date_data)
+                  ORDER BY CASE product_type
+                    WHEN 'analysis'       THEN 1
+                    WHEN 'analysis-early' THEN 2
+                  END
+                ) AS rn
+              FROM FILEINFO
+              WHERE product_type IN ('analysis', 'analysis-early') AND
+                  DATE(date_data) > DATE('{last_updated_text}')
+            )
+            WHERE rn = 1 
+            ORDER BY DATE(date_data);
+        ''')
+        new_files=cur.fetchall()
+        conn.close()
+        filtered_new_files = [(f[0], f[2]) for f in new_files]
         return filtered_new_files
 
-    def netcdf_to_dataframe(self, file):
-        nc = Dataset(file, "r", format="netCDF4")
+    def netcdf_to_dataframe(self, file , date):
+        """
+        Read a netcdf file and return a pandas dataframe
+        :param file: name of the file to read
+        :param date: date corresponding to the file
+        :return:
+        """
+        filepath = os.path.join(os.path.dirname(self.rootpath), "data_store", file)
+        nc = Dataset(filepath, "r", format="netCDF4")
         nb_cells = nc.dimensions['n_meshes'].size
         rain_values = nc.variables['rain'][:].data
 
-        # extract record date from filename
-        regex = r'DATA_(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})'
-        rec_date = self._datetime_from_filename(file, regex)
+        rec_date = datetime.fromisoformat(date)
 
         columns_dict = {
             'cell_id': np.arange(start=1, stop=nb_cells + 1, dtype='i2'),
