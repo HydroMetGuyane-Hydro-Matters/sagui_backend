@@ -1,4 +1,5 @@
 from time import perf_counter
+from os import environ
 
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandError
@@ -18,6 +19,9 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         user_language = 'fr'
         translation.activate(user_language)
+        smtp_sender = environ.get('SMTP_SENDER', 'jean.pommier@pi-geosolutions.fr')
+        smtp_title = environ.get('SMTP_TITLE', 'SAGUI alert')
+
         tic = perf_counter()
         stations_alert_info = sagui_utils.stations_alert.get_stations_alert_info()
         stations_forecast_info = sagui_utils.stations_forecast.get_stations_alert_info()
@@ -70,9 +74,9 @@ class Command(BaseCommand):
                                                  }
                                         )
                 send_mail(
-                    'SAGUI alert',
+                    smtp_title,
                     txt_email,
-                    'ige31.jp@gmail.com',
+                    smtp_sender,
                     [sub.email],
                     fail_silently=False,
                     html_message=html_email
