@@ -22,7 +22,7 @@ class Command(BaseCommand):
         stations_alert_info = sagui_utils.stations_alert.get_stations_alert_info()
         stations_forecast_info = sagui_utils.stations_forecast.get_stations_alert_info()
         rain_info = sagui_utils.rain.get_global_alert_info()
-        atmo_info = sagui_utils.atmo.get_global_alert_info()
+        # atmo_info = sagui_utils.atmo.get_global_alert_info()
 
         subscriptions = models.AlertSubscriptions.objects.all()
         for sub in subscriptions:
@@ -49,9 +49,9 @@ class Command(BaseCommand):
                 if sub.rain_active and rain_info['global_alert_level']:
                     if sagui_utils.rain.alert_code_to_rain_mm(rain_info['global_alert_level']) >= int(sub.rain_level):
                         alerts['rain'] = { 'global_alert_level' : 'rain_'+rain_info['global_alert_level']}
-                if sub.atmo_active and atmo_info['global_alert_level']:
-                    if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
-                        alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
+                # if sub.atmo_active and atmo_info['global_alert_level']:
+                #     if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
+                #         alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
 
                 if not alerts:
                     # don't send email
