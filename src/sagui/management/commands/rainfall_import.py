@@ -47,6 +47,7 @@ class Command(BaseCommand):
     tablename        = 'sagui_rainfall'
     last_updated_without_errors = None
     refresh_daysdelta: int = None
+    product_types: list[str] = []
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--rootpath',
@@ -61,6 +62,9 @@ class Command(BaseCommand):
         parser.add_argument('-t', '--table',
                             default="sagui_rainfall",
                             help='The target table')
+        parser.add_argument('--product_types',
+                            default=os.environ.get("RAINFALL_IMPORT_PRODUCT_TYPES", "analysis,analysis-early"),
+                            help='The product types to consider for import, a comma-separated list of string values. Defaults to "analysis,analysis-early". The listing order matters: first the preferred, then fallback, etc')
         parser.add_argument('-f', '--force_update',
                             default=False,
                             action='store_true',
@@ -89,6 +93,7 @@ class Command(BaseCommand):
         self.only_last_n_days = kwargs.get('only_last_n_days')
         self.commit_page_size = kwargs.get('commit_page_size')
         self.refresh_daysdelta = kwargs.get('refresh_daysdelta')
+        self.product_types = kwargs.get('product_types').split(',') if kwargs.get('product_types') else []
 
         self.stdout.write("Scanning folder {}".format(self.rootpath))
         new_files = self._get_files_list()
@@ -187,6 +192,8 @@ class Command(BaseCommand):
         # Execute a query over the sqlite DB
         conn = sqlite3.connect(self.rootpath)
         cur = conn.cursor()
+        ptypes_switch = ' '.join(map(lambda x: f"WHEN '{x}' THEN {self.product_types.index(x)+1}", self.product_types))
+        ptypes_list = ','.join([f"'{t}'" for t in self.product_types])
         q = f'''
             SELECT file_path, data_type, date_data, date_added_to_db, date_created, product_type, file_status, grid_status
             FROM (
@@ -194,12 +201,11 @@ class Command(BaseCommand):
                 ROW_NUMBER() OVER (
                   PARTITION BY DATE(date_data)
                   ORDER BY CASE product_type
-                    WHEN 'analysis'       THEN 1
-                    WHEN 'analysis-early' THEN 2
+                    {ptypes_switch}
                   END
                 ) AS rn
               FROM FILEINFO
-              WHERE product_type IN ('analysis', 'analysis-early') AND
+              WHERE product_type IN ({ptypes_list}) AND
                   DATE(date_data) > DATE('{last_updated_text}', '-{self.refresh_daysdelta} day')
             )
             WHERE rn = 1
