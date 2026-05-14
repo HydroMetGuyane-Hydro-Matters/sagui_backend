@@ -6,6 +6,7 @@ import psycopg2
 import psycopg2.extras as extras
 from time import perf_counter
 import sys
+from datetime import datetime, timezone
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
@@ -34,6 +35,11 @@ class Command(BaseCommand):
     max_ordem        = None
     commit_page_size = None
     config           = None
+    forecast_daysdelta = None
+    refresh_daysdelta: int = None
+
+    def __init__(self, stdout=None, stderr=None, no_color=False, force_color=False):
+        super().__init__(stdout, stderr, no_color, force_color)
 
     def add_arguments(self, parser):
         parser.add_argument('-r', '--rootpath',
@@ -61,6 +67,14 @@ class Command(BaseCommand):
                             type=int,
                             default=settings.SAGUI_SETTINGS.get('HYFAA_IMPORT_COMMIT_PAGE_SIZE', 1),
                             help='Commit the data into the DB every n different dates (default 1). Should run faster if set to 10 or 50')
+        parser.add_argument('--forecast_daysdelta',
+                            type=int,
+                            default=0,
+                            help='Number of days from now() after which the data should be considered forecast data. The reference time is rounded to the day at 00:01 (-1 means yesterday at 00:01). Default value is 0 (forecast starts from current day) ')
+        parser.add_argument('--refresh_daysdelta',
+                            type=int,
+                            default=3,
+                            help='To always update data from the recent days, set this to the number of days from now that you want to refresh. Defaults to 3) ')
 
     def handle(self, *args, **kwargs):
         tic = perf_counter()
@@ -73,6 +87,8 @@ class Command(BaseCommand):
         self.max_ordem = kwargs.get('max_ordem')
         self.commit_page_size = kwargs.get('commit_page_size')
         self.config = settings.SAGUI_SETTINGS.get('HYFAA_IMPORT_STRUCTURE_CONFIG')
+        self.forecast_daysdelta = kwargs.get('forecast_daysdelta')
+        self.refresh_daysdelta = kwargs.get('refresh_daysdelta')
 
         if not self.config:
             self.stdout.write(self.style.ERROR("Could not load import config data (missing SAGUI_SETTINGS.HYFAA_IMPORT_STRUCTURE_CONFIG)"))
@@ -102,7 +118,7 @@ class Command(BaseCommand):
           * ds: dataserie definition (one element of global script_config['sources'] list)
           * t: time to look for
         """
-        self.stdout.write("Preparing data for day {} (index {})".format(t[1], t[0]))
+        self.stdout.write(f"Preparing data for day {t[1]} - {hyfaautils.julianday_to_datetime(t[1])} (index {t[0]})")
         itime = t[0]
         nb_cells = nc.dimensions['n_cells'].size
         # We will group the netcdf variables as columns of a 2D matrix (the pandas dataframe)
@@ -259,7 +275,9 @@ class Command(BaseCommand):
         """
         Extract the list of times where the data have been updated (unless FORCE_UPDATE is True, in which case it will return
         all the time values
-        Returns: a 3-tuple list: (time index, time value, time at which the data --for this time-frame-- was last updated)
+        Returns: a tuple composed of
+          - a 3-tuple list: (time index, time value, time at which the data --for this time-frame-- was last updated)
+          - the last date of successful updates (i.e. without errors), in julian days
         """
         update_times = None
         last_published_day = 0
@@ -271,6 +289,14 @@ class Command(BaseCommand):
             nc.variables['time'][:],
             nc.variables['time_added_to_hydb'][:]
         ))
+
+        # Hack to split data between forecast and analysis, following true forecast implementation using ECMWF
+        # (fake forecast were placed in a separate file. While with the ECMWF implementation, it is not, and no flag is
+        # provided to separate them in the netcdf)
+        if tablename.endswith('_forecast'):
+            times_array = list(filter(lambda t: t[1] >= round(t[2]) + self.forecast_daysdelta, times_array))
+        else:
+            times_array = list(filter(lambda t: t[1] < round(t[2]) + self.forecast_daysdelta, times_array))
 
         if self.force_update:
             # Don't filter, return everything. Force update on every date
@@ -288,9 +314,11 @@ class Command(BaseCommand):
         last_published_day = tbl_state.last_updated_jd
         last_updated_without_errors_jd = tbl_state.last_updated_without_errors_jd
 
-        # Filter to only the times posterior to last update (fetching the time the data was added
-        # -> handles updates on old data if needs be
-        update_times = list(filter(lambda t: t[2] > last_updated_without_errors_jd, times_array))
+        # Filter to only the times posterior to
+        # - last successful update
+        # - current day - refresh_daysdelta: forces refresh on recent days (configurable span). Causes full update for forecast data, which is good
+        update_times = list(filter(lambda t: (t[2] > last_updated_without_errors_jd)
+             or (t[1] >= round(hyfaautils.datetime_to_julianday(datetime.now(timezone.utc))) - self.refresh_daysdelta), times_array))
 
         return update_times, last_updated_without_errors_jd
 

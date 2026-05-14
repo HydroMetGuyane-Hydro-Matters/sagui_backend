@@ -1,4 +1,5 @@
 from time import perf_counter
+from os import environ
 
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand, CommandError
@@ -18,11 +19,14 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         user_language = 'fr'
         translation.activate(user_language)
+        smtp_sender = environ.get('SMTP_SENDER', 'jean.pommier@pi-geosolutions.fr')
+        smtp_title = environ.get('SMTP_TITLE', 'SAGUI alert')
+
         tic = perf_counter()
         stations_alert_info = sagui_utils.stations_alert.get_stations_alert_info()
         stations_forecast_info = sagui_utils.stations_forecast.get_stations_alert_info()
         rain_info = sagui_utils.rain.get_global_alert_info()
-        atmo_info = sagui_utils.atmo.get_global_alert_info()
+        # atmo_info = sagui_utils.atmo.get_global_alert_info()
 
         subscriptions = models.AlertSubscriptions.objects.all()
         for sub in subscriptions:
@@ -49,9 +53,9 @@ class Command(BaseCommand):
                 if sub.rain_active and rain_info['global_alert_level']:
                     if sagui_utils.rain.alert_code_to_rain_mm(rain_info['global_alert_level']) >= int(sub.rain_level):
                         alerts['rain'] = { 'global_alert_level' : 'rain_'+rain_info['global_alert_level']}
-                if sub.atmo_active and atmo_info['global_alert_level']:
-                    if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
-                        alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
+                # if sub.atmo_active and atmo_info['global_alert_level']:
+                #     if atmo_info['global_alert_level'][1] >= sub.atmo_level.alert_code[1]:
+                #         alerts['atmo'] = { 'global_alert_level' : 'atmo_'+atmo_info['global_alert_level']}
 
                 if not alerts:
                     # don't send email
@@ -70,9 +74,9 @@ class Command(BaseCommand):
                                                  }
                                         )
                 send_mail(
-                    'SAGUI alert',
+                    smtp_title,
                     txt_email,
-                    'ige31.jp@gmail.com',
+                    smtp_sender,
                     [sub.email],
                     fail_silently=False,
                     html_message=html_email

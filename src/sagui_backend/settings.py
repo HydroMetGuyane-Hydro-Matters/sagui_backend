@@ -207,7 +207,7 @@ SAGUI_SETTINGS = {
             },
             {
                 'name': 'forecast',
-                'file': 'mgbstandard_solution_databases/prevision_using_previous_years/post_processing_portal.nc',
+                'file': 'assimilated_solution_databases/post_processing_portal.nc',
                 'nc_data_vars': [
                     'water_elevation_catchment_mean',
                     'water_elevation_catchment_median',

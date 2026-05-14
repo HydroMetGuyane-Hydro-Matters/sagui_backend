@@ -49,4 +49,4 @@ RUN chmod +x /entrypoint.sh &&\
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "sagui_backend.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--no-control-socket", "sagui_backend.wsgi:application"]
